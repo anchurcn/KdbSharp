@@ -7,5 +7,7 @@
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\..\Source\KdbSharp\KdbSharp.csproj" />
   </ItemGroup>
-
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
 </Project>
