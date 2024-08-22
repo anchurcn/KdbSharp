@@ -28,7 +28,7 @@ public abstract class KTypeConverter
     // Writes
     public abstract void WriteAsObject(KWriter writer, object? value, KSerializerOptions options);
 
-    [return: NotNullIfNotNull(nameof(value))]
+    // [return: NotNullIfNotNull(nameof(value))]
     internal static T? UnboxOnWrite<T>(object? value)
     {
         if (default(T) is not null && value is null)
