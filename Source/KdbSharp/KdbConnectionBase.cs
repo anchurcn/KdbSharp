@@ -12,28 +12,26 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
-using KdbSharp.Extensions;
-using KdbSharp.Serialization;
 using System.Net.Sockets;
 using System.Text;
+using KdbSharp.Extensions;
+using KdbSharp.Serialization;
 
 namespace KdbSharp;
 
-public class KdbConnectionOptions
-{
-    public string Host { get; set; } = "localhost";
-    public int Port { get; set; } = 5000;
-    public string? Username { get; set; } = null;
-    public string? Password { get; set; } = null;
-    public bool UseCompression { get; set; } = false;
-    public Encoding TextEncoding { get; set; } = Encoding.UTF8;
-    public int MaxReadingChunk { get; set; } = 0x10000;
-    public int MaxWritingChunk { get; set; } = 0x10000;
-}
-
+/// <summary>
+/// Represents a base class for a Kdb+ connection.
+/// </summary>
 public class KdbConnectionBase
 {
+    /// <summary>
+    /// Gets the connection options for the Kdb+ connection.
+    /// </summary>
     public KdbConnectionOptions Options { get; }
+
+    /// <summary>
+    /// Gets the text encoding used for the Kdb+ connection.
+    /// </summary>
     public Encoding TextEncoding => Options.TextEncoding;
 
     // The underlying tcp connection and the network stream.
@@ -49,13 +47,19 @@ public class KdbConnectionBase
     private KReadBuffer _readBuffer = null!;
     private KWriteBuffer _writeBuffer = null!;
 
+    /// <summary>
+    /// Gets the protocol version of the opened Kdb+ connection.
+    /// </summary>
     public byte ProtocolVersion { get; private set; }
 
-    // Constructors
+    /// <summary>
+    /// Initializes a new instance of the <see cref="KdbConnectionBase"/> class with the specified connection options.
+    /// </summary>
+    /// <param name="options">The connection options for the Kdb+ connection.</param>
     public KdbConnectionBase(KdbConnectionOptions options)
     {
         Options = options;
-        // basic connection options check
+
         if (Options.Host == null)
         {
             throw new InvalidOperationException("Host is not specified.");
@@ -67,7 +71,8 @@ public class KdbConnectionBase
     }
 
     // Connection string ctor
-    public KdbConnectionBase(string connectionString) : this(ParseConnectionString(connectionString))
+    public KdbConnectionBase(string connectionString)
+        : this(ParseConnectionString(connectionString))
     {
     }
 
@@ -225,7 +230,7 @@ public class KdbConnectionBase
         ThrowIfClosed();
         try
         {
-            await Stream.PopulateMemory(_headerRecvBuffer, cancellationToken: cancellation);
+            await Stream.PopulateMemory(_headerRecvBuffer, cancellation);
             _readBuffer.SetBuffer(_headerRecvBuffer);
 
             var headerMeta = _readBuffer.Read<MessageHeaderMeta>();
