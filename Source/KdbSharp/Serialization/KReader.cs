@@ -76,7 +76,7 @@ public class KReader
             readFrame.ListLength = _buffer.ReadInt32();
             if(readFrame.TypeStamp.IsAtomList())
             {
-                readFrame.AtomTypeStamp = TypeStamp.Neg();
+                readFrame.AtomTypeStamp = readFrame.TypeStamp.Neg();
             }
         }
         else if(readFrame.TypeStamp == KType.Table)
