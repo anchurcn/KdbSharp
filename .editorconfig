@@ -421,6 +421,7 @@ dotnet_naming_rule.parameters_rule.severity             = warning
 # Justification: Comments turned off
 # https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1633.md
 dotnet_diagnostic.SA1633.severity = none
+csharp_using_directive_placement = outside_namespace:warning
 
 ##########################################
 # License
