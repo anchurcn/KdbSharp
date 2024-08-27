@@ -1,4 +1,4 @@
-/*
+﻿/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public partial class KSerializerOptions
         // Complex
         RegisterDefaultConverter<object[]>(KType.GeneralList, new KGenericListConverter());
         // Dictionary
-        RegisterDefaultConverter<KSimpleDictionary>(KType.Dictionary, new KDictionaryConverter<KSimpleDictionary>());
+        RegisterDefaultConverter<KSimpleDictionary>(KType.Dictionary, new KDictionaryConverter<object>());
         RegisterDefaultConverter<KTable>(KType.Table, new KTableConverter());
         // Unit
         RegisterDefaultConverter<KUnit>(KType.Unit, new KUnitConverter());
@@ -135,6 +135,7 @@ public partial class KSerializerOptions
         RegisterConverter(new KGenericListConverter());
         RegisterConverter(new KDictionaryConverter<KSimpleDictionary>());
         RegisterConverter(new KDictionaryConverter<KKeyedTable>());
+        RegisterConverter(new KDictionaryConverter<object>());
         RegisterConverter(new KTableConverter());
         RegisterConverter(new KUnitConverter());
         RegisterConverter(new KdbExceptionConverter());
