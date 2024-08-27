@@ -21,23 +21,23 @@ namespace KdbSharp;
 
 public readonly struct KdbCommand<T>
 {
-    readonly T ParameterizedQuery;
-    readonly KdbConnection Connection;
+    private readonly T _parameterizedQuery;
+    private readonly KdbConnection _connection;
     public KdbCommand(T parameterizedQuery, KdbConnection connection)
     {
-        ParameterizedQuery = parameterizedQuery;
-        Connection = connection;
+        _parameterizedQuery = parameterizedQuery;
+        _connection = connection;
     }
 
     public async Task<TResult?> GetAsync<TResult>(KSerializerOptions? options = null, CancellationToken cancellation = default)
     {
-        await Connection.SendParameterizedRequestAsync(ParameterizedQuery, options, cancellation);
-        return await Connection.RecvResponseObjectAsync<TResult>(options, cancellation);
+        await _connection.SendParameterizedRequestAsync(_parameterizedQuery, options, cancellation);
+        return await _connection.RecvResponseObjectAsync<TResult>(options, cancellation);
     }
 
     public Task SetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
     {
-        throw new NotImplementedException();
+        return _connection.SendParameterizedAsyncAsync(_parameterizedQuery, options, cancellation);
     }
 }
 
@@ -136,6 +136,28 @@ public class KdbConnection : KdbConnectionBase
         _readerOptions.IsLittleEndian = message.IsLittleEndian;
         _readerOptions.TextEncoding = TextEncoding;
         return KSerializer.Deserialize<T>(message.Body, _readerOptions, options);
+    }
+
+    internal async Task SendParameterizedAsyncAsync<T>(T value, KSerializerOptions? options, CancellationToken cancellation)
+    {
+        KSerializer.Serialize(Writer, value, ConvertParameterizedQuery, options);
+        _messageWrite.RepackMessage(MessageType.Async, Writer.Buffer.IsLittleEndian, Writer.Buffer.GetWritedMemory());
+        await SendAsync(_messageWrite, cancellation);
+        Writer.Buffer.Clear();
+
+        static void ConvertParameterizedQuery(KWriter writer, T? value, KSerializerOptions options)
+        {
+            var type = typeof(T);
+            // Check if T is ValueTuple and the first field is string.
+            if (type.Name.Contains(nameof(ValueTuple)) && type.GetField("Item1")?.FieldType == typeof(string))
+            {
+                ParameterizedQueryConverter<T>.Write(writer, value!, options);
+            }
+            else
+            {
+                throw new InvalidOperationException("Not a parameterized query.");
+            }
+        }
     }
 
     // Reader/Writer holds a buffer, and KMessage can just reference the buffer by Memory<byte>(a view of part of the buffer).
