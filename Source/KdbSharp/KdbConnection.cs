@@ -161,7 +161,7 @@ public class KdbConnection : KdbConnectionBase
     }
 
     // Reader/Writer holds a buffer, and KMessage can just reference the buffer by Memory<byte>(a view of part of the buffer).
-    public async Task<TResult?> Get<TResult>(string expr, KSerializerOptions? options = null, CancellationToken cancellation = default)
+    public async Task<TResult?> GetAsync<TResult>(string expr, KSerializerOptions? options = null, CancellationToken cancellation = default)
     {
         await SendRequestAsync(expr, options, cancellation);
         return await RecvResponseObjectAsync<TResult>(options, cancellation);
@@ -217,7 +217,7 @@ public class KdbConnection : KdbConnectionBase
 
     #region Subscription
 
-    public Task Set(string expr, CancellationToken cancellation = default)
+    public Task SetAsync(string expr, CancellationToken cancellation = default)
     {
         // Serialize and send an async KMessage.
         KSerializer.Serialize(Writer, expr, KType.CharList);
@@ -226,7 +226,7 @@ public class KdbConnection : KdbConnectionBase
         return SendAsync(_messageWrite, cancellation);
     }
 
-    public async IAsyncEnumerable<KMessage> SubscribeAsync([EnumeratorCancellation] CancellationToken cancellation = default)
+    public async IAsyncEnumerable<KMessage> Subscribe([EnumeratorCancellation] CancellationToken cancellation = default)
     {
         while (!cancellation.IsCancellationRequested)
         {
