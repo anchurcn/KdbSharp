@@ -1,4 +1,4 @@
-/*
+﻿/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -19,30 +19,30 @@ using System.Runtime.CompilerServices;
 
 namespace KdbSharp;
 
-public class KdbConnection : KdbConnectionBase
+public readonly struct KdbCommand<T>
 {
-    public readonly struct Command<T>
+    readonly T ParameterizedQuery;
+    readonly KdbConnection Connection;
+    public KdbCommand(T parameterizedQuery, KdbConnection connection)
     {
-        readonly T ParameterizedQuery;
-        readonly KdbConnection Connection;
-        public Command(T parameterizedQuery, KdbConnection connection)
-        {
-            ParameterizedQuery = parameterizedQuery;
-            Connection = connection;
-        }
-
-        public async Task<TResult?> GetAsync<TResult>(KSerializerOptions? options = null, CancellationToken cancellation = default)
-        {
-            await Connection.SendParameterizedRequestAsync(ParameterizedQuery, options, cancellation);
-            return await Connection.RecvResponseObjectAsync<TResult>(options, cancellation);
-        }
-
-        public Task SetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
-        {
-            throw new NotImplementedException();
-        }
+        ParameterizedQuery = parameterizedQuery;
+        Connection = connection;
     }
 
+    public async Task<TResult?> GetAsync<TResult>(KSerializerOptions? options = null, CancellationToken cancellation = default)
+    {
+        await Connection.SendParameterizedRequestAsync(ParameterizedQuery, options, cancellation);
+        return await Connection.RecvResponseObjectAsync<TResult>(options, cancellation);
+    }
+
+    public Task SetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class KdbConnection : KdbConnectionBase
+{
     #region Write
 
     private readonly KWriteBuffer _writeBuffer;
@@ -99,7 +99,7 @@ public class KdbConnection : KdbConnectionBase
             writer.WriteEndList();
         }
     }
-    private async Task SendParameterizedRequestAsync<T>(T value, KSerializerOptions? options, CancellationToken cancellation)
+    internal async Task SendParameterizedRequestAsync<T>(T value, KSerializerOptions? options, CancellationToken cancellation)
     {
         KSerializer.Serialize(Writer, value, ConvertParameterizedQuery, options);
         _messageWrite.RepackMessage(MessageType.Request, Writer.Buffer.IsLittleEndian, Writer.Buffer.GetWritedMemory());
@@ -120,7 +120,7 @@ public class KdbConnection : KdbConnectionBase
             }
         }
     }
-    private async Task<T?> RecvResponseObjectAsync<T>(KSerializerOptions? options , CancellationToken cancellation)
+    internal async Task<T?> RecvResponseObjectAsync<T>(KSerializerOptions? options , CancellationToken cancellation)
     {
         var message = await RecvAsync(cancellation);
         if (message.Type != MessageType.Response)
@@ -145,49 +145,49 @@ public class KdbConnection : KdbConnectionBase
         return await RecvResponseObjectAsync<TResult>(options, cancellation);
     }
 
-    static Command<T> CreateCommandInternal<T>(T parameterizedQuery, KdbConnection connection)
+    static KdbCommand<T> CreateCommandInternal<T>(T parameterizedQuery, KdbConnection connection)
     {
-        return new Command<T>(parameterizedQuery, connection);
+        return new KdbCommand<T>(parameterizedQuery, connection);
     }
 
     #region CreateCommand
 
-    public Command<(string, TArg1)> CreateCommand<TArg1>(string func, TArg1 arg1)
+    public KdbCommand<(string, TArg1)> CreateCommand<TArg1>(string func, TArg1 arg1)
     {
         return CreateCommandInternal((func, arg1), this);
     }
 
-    public Command<(string, TArg1, TArg2)> CreateCommand<TArg1, TArg2>(string func, TArg1 arg1, TArg2 arg2)
+    public KdbCommand<(string, TArg1, TArg2)> CreateCommand<TArg1, TArg2>(string func, TArg1 arg1, TArg2 arg2)
     {
         return CreateCommandInternal((func, arg1, arg2), this);
     }
 
-    public Command<(string, TArg1, TArg2, TArg3)> CreateCommand<TArg1, TArg2, TArg3>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3)
+    public KdbCommand<(string, TArg1, TArg2, TArg3)> CreateCommand<TArg1, TArg2, TArg3>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3)
     {
         return CreateCommandInternal((func, arg1, arg2, arg3), this);
     }
 
-    public Command<(string, TArg1, TArg2, TArg3, TArg4)> CreateCommand<TArg1, TArg2, TArg3, TArg4>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4)
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4)> CreateCommand<TArg1, TArg2, TArg3, TArg4>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4)
     {
         return CreateCommandInternal((func, arg1, arg2, arg3, arg4), this);
     }
 
-    public Command<(string, TArg1, TArg2, TArg3, TArg4, TArg5)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5)
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5)
     {
         return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5), this);
     }
 
-    public Command<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6)
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6)
     {
         return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6), this);
     }
 
-    public Command<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7)
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7)
     {
         return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6, arg7), this);
     }
 
-    public Command<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7, TArg8 arg8)
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7, TArg8 arg8)
     {
         return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8), this);
     }
