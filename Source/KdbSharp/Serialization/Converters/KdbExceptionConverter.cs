@@ -1,4 +1,4 @@
-/*
+﻿/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ public class KdbExceptionConverter : KTypeConverter<KdbException>
     public override KdbException Read(KReader reader, KSerializerOptions options)
     {
         var errorMessage = reader.ReadSymbol();
-        return new KdbException(errorMessage);
+        return KdbException.CreateFromKdbErrorMessage(errorMessage);
     }
 
     public override void Write(KWriter writer, KdbException value, KSerializerOptions options)
     {
         writer.BeginWriteType(KType.Error);
-        writer.WriteSymbol(value.ShortText);
+        writer.WriteSymbol(value.Message);
         writer.EndWriteType();
     }
 }

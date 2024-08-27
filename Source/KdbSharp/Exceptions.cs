@@ -1,4 +1,4 @@
-/*
+﻿/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -27,16 +27,32 @@ public class KdbSharpException : Exception
       System.Runtime.Serialization.SerializationInfo info,
       System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 }
+
+
 [Serializable]
-public class KdbException : KdbSharpException
+public class KdbException : Exception
 {
-    public string ShortText { get; }
-    public KdbException() { ShortText = string.Empty; }
-    public KdbException(string shortText) : base(shortText) { ShortText = shortText; }
-    public KdbException(string shortText, Exception inner) : base(shortText, inner) { ShortText = shortText; }
+    public KdbException() { }
+    public KdbException(string message) : base(message) { }
+    public KdbException(string message, Exception inner) : base(message, inner) { }
     protected KdbException(
       System.Runtime.Serialization.SerializationInfo info,
-      System.Runtime.Serialization.StreamingContext context) : base(info, context) { ShortText = string.Empty; }
+      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+
+    public static Dictionary<string, string> KdbErrorMessageDictionary { get; } = new Dictionary<string, string>()
+    {
+        {"nyi", "Not yet implemented" }
+    };
+
+    public static KdbException CreateFromKdbErrorMessage(string errorMessage)
+    {
+        var message = errorMessage;
+        if (KdbErrorMessageDictionary.TryGetValue(errorMessage, out var description))
+        {
+            message = $"{errorMessage}; {description}";
+        }
+        return new KdbException(message);
+    }
 }
 
 public class KdbConnectionException : Exception
