@@ -53,22 +53,31 @@ public enum KType: sbyte
     SecondList = 18,
     Time = -19,
     TimeList = 19,
+    Enum = -20,
+    EnumList = 20,
+    /*
+     * -20 ~ -76   enums
+     *  20 ~  76   enums list
+     */
     AnyMap = 77,
+    /*
+     * 78-96   77+t – mapped list of lists of type t
+     */
     NestedSymEnum = 97,
     Table = 98,
     Dictionary = 99,
     Lambda = 100,
-    Unit = 101,
+    UnaryPrimitive = 101,
     Operator = 102,
     Iterator = 103,
     Projection = 104,
     Composition = 105,
-    Iterator106 = 106,
-    Iterator107 = 107,
-    Iterator108 = 108,
-    Iterator109 = 109,
-    Iterator110 = 110,
-    Iterator111 = 111,
+    EachModified = 106,
+    OverModified = 107,
+    ScanModified = 108,
+    PriorModified = 109,
+    EachRightModified = 110,
+    EachLeftModified = 111,
     DynamicLoad = 112,
     Error = -128,
 }

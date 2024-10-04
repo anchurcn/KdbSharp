@@ -120,7 +120,7 @@ public class KTypeInfo<T> : KTypeInfo
             // 默认行为（宽松模式）：
             // 如果请求的类型是可空的值类型，可以接受 Unit 作为 null （意味着 Unit 和可视为空的 Atom 会被解释为 null，round trip 可能不对称）
             // 如果是值类型，但不可空，应该抛出异常
-            if (kt == KType.Unit)
+            if (kt == KType.UnaryPrimitive)
             {
                 if (Options.NullHandleStategy == NullHandleStrategy.Default)
                 {

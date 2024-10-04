@@ -68,7 +68,7 @@ public partial class KSerializerOptions
         RegisterDefaultConverter<KSimpleDictionary>(KType.Dictionary, new KDictionaryConverter<object>());
         RegisterDefaultConverter<KTable>(KType.Table, new KTableConverter());
         // Unit
-        RegisterDefaultConverter<KUnit>(KType.Unit, new KUnitConverter());
+        RegisterDefaultConverter<KUnit>(KType.UnaryPrimitive, new KUnitConverter());
         // Error
         RegisterDefaultConverter<KdbException>(KType.Error, new KdbExceptionConverter());
 

@@ -303,7 +303,7 @@ public class KWriter
 
     internal void WriteUnit()
     {
-        BeginWriteType(KType.Unit);
+        BeginWriteType(KType.UnaryPrimitive);
         _buffer.WriteByte(0);
         EndWriteType();
     }

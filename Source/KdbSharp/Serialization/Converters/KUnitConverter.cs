@@ -20,7 +20,7 @@ public class KUnitConverter : KTypeConverter<KUnit>
 {
     public override bool CanConvert(Type t, KType kt)
     {
-        return kt == KType.Unit && t == TypeToConvert;
+        return kt == KType.UnaryPrimitive && t == TypeToConvert;
     }
 
     public override KUnit Read(KReader reader, KSerializerOptions options)
@@ -34,7 +34,7 @@ public class KUnitConverter : KTypeConverter<KUnit>
 
     public override void Write(KWriter writer, KUnit value, KSerializerOptions options)
     {
-        writer.BeginWriteType(KType.Unit);
+        writer.BeginWriteType(KType.UnaryPrimitive);
         writer.WriteByte(0);
         writer.EndWriteType();
     }
