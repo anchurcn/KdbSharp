@@ -1,4 +1,4 @@
-/*
+﻿/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -41,16 +41,16 @@ public partial class KSerializer
 
     #region Deserialize
 
-    [Obsolete("由于 KReadBuffer 的实现，不支持 ReadOnlySpan<byte>，请使用 byte[] 作为参数")]
-    public static T Deserialize<T>(ReadOnlySpan<byte> serializedKObj, KReaderOptions readerOptions, KSerializerOptions? options = null)
-    {
-        // 1. Converter resolver 参考 npgsql 的 实现，因为除了要根据 Requested type，
-        // 还要根据读取时实际的 KdbType 来选择 Converter
-        // Requested type 如果通过泛型参数传入，可以用 TypeInfo 固化一些信息，减少反射开销
-        options ??= DefaultOptions;
-        var info = GetTypeInfo<T>(options);
-        throw new NotImplementedException();
-    }
+    //[Obsolete("由于 KReadBuffer 的实现，不支持 ReadOnlySpan<byte>，请使用 byte[] 作为参数")]
+    //public static T Deserialize<T>(ReadOnlySpan<byte> serializedKObj, KReaderOptions readerOptions, KSerializerOptions? options = null)
+    //{
+    //    // 1. Converter resolver 参考 npgsql 的 实现，因为除了要根据 Requested type，
+    //    // 还要根据读取时实际的 KdbType 来选择 Converter
+    //    // Requested type 如果通过泛型参数传入，可以用 TypeInfo 固化一些信息，减少反射开销
+    //    options ??= DefaultOptions;
+    //    var info = GetTypeInfo<T>(options);
+    //    throw new NotImplementedException();
+    //}
     public static T? Deserialize<T>(ReadOnlyMemory<byte> data, KReaderOptions readerOptions, KSerializerOptions? options = null)
     {
         options ??= DefaultOptions;
@@ -92,7 +92,13 @@ public partial class KSerializer
     }
     public static byte[] Serialize<T>(T value, KSerializerOptions? options = null)
     {
-        throw new NotImplementedException();
+        var writeBuffer = new KWriteBuffer(new KWriterOptions()
+        {
+            ProtocolVersion = KConstant.ClientProtocolVersion,
+            TextEncoding = options?.TextEncoding ?? Encoding.UTF8,
+        });
+        Serialize(writeBuffer.Writer, value, options);
+        return writeBuffer.ToArray();
     }
     public static void Serialize<T>(Stream writer, T value, Type kt, JsonSerializerOptions? options = null)
     {
