@@ -14,12 +14,17 @@
 */
 namespace KdbSharp.Extensions;
 
+/// <summary>
+/// Provides extension methods for working with streams.
+/// </summary>
 public static class StreamExtensions
 {
     public static async ValueTask PopulateBufferFromStreamAsync(Stream stream, Memory<byte> buffer, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
         if (stream == null)
+        {
             throw new ArgumentNullException(nameof(stream));
+        }
 
         if (!stream.CanRead)
         {
