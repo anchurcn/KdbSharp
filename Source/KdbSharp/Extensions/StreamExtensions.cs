@@ -19,6 +19,17 @@ namespace KdbSharp.Extensions;
 /// </summary>
 public static class StreamExtensions
 {
+    /// <summary>
+    /// Asynchronously populates the provided buffer with data read from the stream.
+    /// </summary>
+    /// <param name="stream">The stream to read data from.</param>
+    /// <param name="buffer">The buffer to populate with data.</param>
+    /// <param name="progress">An optional progress reporter to report the number of bytes read.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous read operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the stream is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the stream is not readable.</exception>
+    /// <exception cref="EndOfStreamException">Thrown when the end of the stream is reached unexpectedly.</exception>
     public static async ValueTask PopulateBufferFromStreamAsync(Stream stream, Memory<byte> buffer, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
         if (stream == null)
@@ -31,14 +42,15 @@ public static class StreamExtensions
             throw new InvalidOperationException("Stream is not readable.");
         }
 
-        int bytesRead = 0;
+        var bytesRead = 0;
         while (bytesRead < buffer.Length)
         {
-            int bytesReadThisIteration = await stream.ReadAsync(buffer[bytesRead..], cancellationToken);
+            var bytesReadThisIteration = await stream.ReadAsync(buffer[bytesRead..], cancellationToken).ConfigureAwait(false);
             if (bytesReadThisIteration == 0)
             {
                 throw new EndOfStreamException("Reached the end of stream unexpectedly.");
             }
+
             bytesRead += bytesReadThisIteration;
 
             // Update progress if a progress object is provided
@@ -46,13 +58,24 @@ public static class StreamExtensions
         }
     }
 
-    public static ValueTask PopulateMemory(this Stream stream, Memory<byte> buffer, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
-    {
-        return PopulateBufferFromStreamAsync(stream, buffer, progress, cancellationToken);
-    }
+    /// <summary>
+    /// Asynchronously populates the provided buffer with data read from the stream.
+    /// </summary>
+    /// <param name="stream">The stream to read data from.</param>
+    /// <param name="buffer">The buffer to populate with data.</param>
+    /// <param name="progress">An optional progress reporter to report the number of bytes read.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous read operation.</returns>
+    public static ValueTask PopulateMemoryAsync(this Stream stream, Memory<byte> buffer, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
+        => PopulateBufferFromStreamAsync(stream, buffer, progress, cancellationToken);
 
-    public static ValueTask PopulateMemory(this Stream stream, Memory<byte> buffer, CancellationToken cancellationToken = default)
-    {
-        return PopulateBufferFromStreamAsync(stream, buffer, null, cancellationToken);
-    }
+    /// <summary>
+    /// Asynchronously populates the provided buffer with data read from the stream.
+    /// </summary>
+    /// <param name="stream">The stream to read data from.</param>
+    /// <param name="buffer">The buffer to populate with data.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous read operation.</returns>
+    public static ValueTask PopulateMemoryAsync(this Stream stream, Memory<byte> buffer, CancellationToken cancellationToken = default)
+        => PopulateBufferFromStreamAsync(stream, buffer, null, cancellationToken);
 }

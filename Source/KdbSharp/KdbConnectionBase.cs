@@ -230,7 +230,7 @@ public class KdbConnectionBase
         ThrowIfClosed();
         try
         {
-            await Stream.PopulateMemory(_headerRecvBuffer, cancellation);
+            await Stream.PopulateMemoryAsync(_headerRecvBuffer, cancellation);
             _readBuffer.SetBuffer(_headerRecvBuffer);
 
             var headerMeta = _readBuffer.Read<MessageHeaderMeta>();
@@ -238,7 +238,7 @@ public class KdbConnectionBase
             var messageLen = _readBuffer.ReadInt32();
 
             var message = KMessage.Alloc(headerMeta, messageLen);
-            await Stream.PopulateMemory(message.Body, cancellation);
+            await Stream.PopulateMemoryAsync(message.Body, cancellation);
             return message;
         }
         catch (Exception)
