@@ -1,4 +1,4 @@
-﻿/*
+/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -255,4 +255,31 @@ public class KdbConnection : KdbConnectionBase
 
 public static class ConnectionExtensions
 {
+    public static async IAsyncEnumerable<KMessage> Subscribe(this KdbConnection connection, [EnumeratorCancellation] CancellationToken cancellation = default)
+    {
+        while (!cancellation.IsCancellationRequested)
+        {
+            var message = await connection.RecvAsync(cancellation).ConfigureAwait(false);
+            if (message.Type != MessageType.Async)
+            {
+                if (message.Type == MessageType.Request)
+                {
+                    throw new InvalidOperationException(
+                        "Unexpected request message.");
+                }
+                else if (message.Type == MessageType.Response)
+                {
+                    throw new InvalidOperationException(
+                        "Unexpected response message.");
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        "Unknown message type.");
+                }
+            }
+
+            yield return message;
+        }
+    }
 }
