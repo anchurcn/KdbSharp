@@ -146,6 +146,6 @@ public class KSymbolConverter : KTypeConverter<string>
 
     public override void Write(KWriter writer, string value, KSerializerOptions options)
     {
-        writer.WriteSymbol(value);
+        writer.WriteSymbol(value, options.TextEncoding);
     }
 }

@@ -34,7 +34,7 @@ namespace KdbSharp.Serialization.Converters
 
         public override void Write(KWriter writer, string value, KSerializerOptions options)
         {
-            writer.WriteCharList(value);
+            writer.WriteCharList(value, options.TextEncoding);
         }
     }
 }

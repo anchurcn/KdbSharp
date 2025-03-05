@@ -32,7 +32,7 @@ public class KWriteBuffer
     {
         _buffer = Array.Empty<byte>();
         _position = 0;
-        _writer = new KWriter(this, options);
+        _writer = new KWriter(this);
     }
 
     internal KWriteBuffer()
@@ -40,7 +40,7 @@ public class KWriteBuffer
         var options = new KWriterOptions();
         _buffer = Array.Empty<byte>();
         _position = 0;
-        _writer = new KWriter(this, options);
+        _writer = new KWriter(this);
     }
 
     public bool IsLittleEndian => BitConverter.IsLittleEndian;

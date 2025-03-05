@@ -1,4 +1,4 @@
-﻿/*
+/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class KdbExceptionConverter : KTypeConverter<KdbException>
     public override void Write(KWriter writer, KdbException value, KSerializerOptions options)
     {
         writer.BeginWriteType(KType.Error);
-        writer.WriteSymbol(value.Message);
+        writer.WriteSymbol(value.Message, options.TextEncoding);
         writer.EndWriteType();
     }
 }

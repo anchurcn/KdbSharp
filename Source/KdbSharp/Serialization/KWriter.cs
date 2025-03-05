@@ -25,7 +25,6 @@ public class KWriterOptions
 
 public class KWriter
 {
-    internal readonly KWriteBuffer _buffer;
     public struct WriteStackFrame
     {
         public KType TypeStamp;
@@ -34,9 +33,12 @@ public class KWriter
         public KType? AtomTypeStamp;
     }
 
+    public byte ProtocolVersion { get; set; }
+    internal readonly KWriteBuffer _buffer;
+
     private readonly Stack<WriteStackFrame> _stack = new Stack<WriteStackFrame>();
     private WriteStackFrame CurrentFrame => _stack.Count > 0 ? _stack.Peek() :
-        throw new InvalidOperationException("No type is being read.");
+        throw new InvalidOperationException("No type is being write.");
     public KType TypeStamp => CurrentFrame.TypeStamp;
     public byte? Attributes => CurrentFrame.Attributes;
     public int? ListLength => CurrentFrame.ListLength;
@@ -47,14 +49,9 @@ public class KWriter
 
     public KWriteBuffer Buffer => _buffer;
 
-    public KWriterOptions Options { get; }
-
-    public KWriter(KWriteBuffer buffer, KWriterOptions? options = null)
+    public KWriter(KWriteBuffer buffer)
     {
-        options ??= new KWriterOptions();
         _buffer = buffer;
-        Options = options;
-        _protocolVersion = options.ProtocolVersion;
     }
 
     public void BeginWriteType(KType type)
@@ -89,7 +86,6 @@ public class KWriter
         }
     }
 
-    private readonly byte _protocolVersion;
     public void WriteTypeStamp(KType kType)
     {
         // Protocol validation
@@ -100,9 +96,9 @@ public class KWriter
         void ThrowIfUsingKTypePreSupportedProtocolVersion(KType target, byte minimalSupportedProtocolVersion)
         {
             var beingChecked = kType.IsAtomList() ? kType.GetUnderlyingType() : kType;
-            if (beingChecked == target && _protocolVersion < minimalSupportedProtocolVersion)
+            if (beingChecked == target && ProtocolVersion < minimalSupportedProtocolVersion)
             {
-                throw new NotSupportedException($"KType {target} is not supported in protocol version {_protocolVersion}, minimal supported protocol version is {minimalSupportedProtocolVersion}.");
+                throw new NotSupportedException($"KType {target} is not supported in protocol version {ProtocolVersion}, minimal supported protocol version is {minimalSupportedProtocolVersion}.");
             }
         }
         _buffer.WriteByte((byte)kType);
@@ -181,9 +177,8 @@ public class KWriter
         EndWriteType();
     }
 
-    public void WriteSymbol(ReadOnlySpan<char> value, Encoding? encoding = null)
+    public void WriteSymbol(ReadOnlySpan<char> value, Encoding encoding)
     {
-        encoding ??= Options.TextEncoding;
         BeginWriteType(KType.Symbol);
         _buffer.WriteNullTerminatedString(value, encoding);
         EndWriteType();
@@ -292,9 +287,8 @@ public class KWriter
         EndWriteType();
     }
 
-    public void WriteCharList(string value, Encoding? encoding = null, byte attributes = 0)
+    public void WriteCharList(string value, Encoding encoding, byte attributes = 0)
     {
-        encoding ??= Options.TextEncoding;
         var bytes = encoding.GetBytes(value);
         WriteStartList(KType.CharList, bytes.Length, attributes);
         _buffer.WriteBytes(bytes);

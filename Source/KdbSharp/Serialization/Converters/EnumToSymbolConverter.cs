@@ -43,7 +43,7 @@ public class EnumToSymbolConverterFactory : KTypeConverterFactory
 
         public override void Write(KWriter writer, T value, KSerializerOptions options)
         {
-            writer.WriteSymbol(value.ToString());
+            writer.WriteSymbol(value.ToString(), options.TextEncoding);
         }
     }
 }
