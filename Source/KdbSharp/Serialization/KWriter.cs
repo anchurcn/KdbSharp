@@ -13,6 +13,7 @@
  limitations under the License.
 */
 using KdbSharp.Types;
+using System.Buffers;
 using System.Text;
 
 namespace KdbSharp.Serialization;
@@ -23,6 +24,7 @@ public class KWriterOptions
     public byte ProtocolVersion { get; set; } = KConstant.ClientProtocolVersion;
 }
 
+[Obsolete]
 public class KWriter
 {
     public struct WriteStackFrame
@@ -49,9 +51,9 @@ public class KWriter
 
     public KWriteBuffer Buffer => _buffer;
 
-    public KWriter(KWriteBuffer buffer)
+    public KWriter(IBufferWriter<byte> writer)
     {
-        _buffer = buffer;
+        _buffer = new KWriteBuffer(writer);
     }
 
     public void BeginWriteType(KType type)

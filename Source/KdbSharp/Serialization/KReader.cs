@@ -23,7 +23,7 @@ public class KReaderOptions
     public bool IsLittleEndian { get; set; }
     public Encoding TextEncoding { get; set; } = Encoding.UTF8;
 }
-
+[Obsolete]
 public class KReader
 {
     public struct ReadStackFrame
