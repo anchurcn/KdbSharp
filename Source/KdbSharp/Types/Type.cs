@@ -82,6 +82,11 @@ public enum KType: sbyte
     Error = -128,
 }
 
+public enum UnaryPrimitive: byte
+{
+    Unit, // ::
+}
+
 public sealed class KUnit
 {
     private KUnit()
