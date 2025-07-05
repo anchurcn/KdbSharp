@@ -29,7 +29,7 @@ dotnet add package KdbSharp
 
 ## Usage
 
-Basic usage example:
+### Basic Connection
 
 ```csharp
 // Connect to a kdb+ server
@@ -41,73 +41,68 @@ var connection = new KdbConnection(new KdbConnectionOptions
     Password = "password"   // Optional
 });
 
-// Open the connection
 await connection.OpenAsync();
+```
 
-// Execute a simple query and get the result
+### GetAsync - Execute Queries and Get Results
+
+```csharp
+// Execute simple queries
 var result = await connection.GetAsync<object>("`q`w`e!1 2 3");
+var value = await connection.GetAsync<int>("42i");
+var table = await connection.GetAsync<KTable>("([] col1:1 2 3; col2:`a`b`c)");
+```
 
-// Execute a query with parameters using CreateCommand
-var command = connection.CreateCommand<int, string>("select from table where id=? and name=?", 123, "test");
-var queryResult = await command.GetAsync<KTable>();
+### SetAsync - Execute Async Commands
 
-// Subscribe to a data feed
+```csharp
+// Execute commands without waiting for response
+await connection.SetAsync("insert[`trade] (1; `AAPL; 100.5; 1000)");
+await connection.SetAsync(".u.sub[`trade;`]");  // Subscribe to updates
+```
+
+### Parameterized Queries with CreateCommand
+
+```csharp
+// Single parameter
+var result1 = await connection.CreateCommand("{select from trade where sym=x}", "AAPL")
+    .GetAsync<KTable>();
+
+// Multiple parameters
+var result2 = connection.CreateCommand("select from trade where sym=x and size>y", "AAPL", 500)
+    .GetAsync<KTable>();
+
+// Async execution with parameters
+var result3 = connection.CreateCommand("insert[`trade] (`MSFT; x)", 150.75)
+    .SetAsync();
+```
+
+### Receiving Async Messages Using Subscribe Extension
+
+```csharp
+// Subscribe to updates
 await connection.SetAsync(".u.sub[`trade;`]");
+
+// Use the Subscribe extension method for easier async enumeration
 await foreach (var message in connection.Subscribe().WithCancellation(cancellationToken))
 {
     if (message.Compressed)
     {
         message.Uncompress();
     }
-    
-    var data = message.Deserialize(new KSerializerOptions());
-    // Process the data
-    
+
+    var data = message.Deserialize();
+    // TODO: Process the data
+
     // Important: Dispose the message when done
     message.Dispose();
 }
-```
-
-Connection string can also be used:
-
-```csharp
-// Connect using a connection string
-var connection = new KdbConnection("Host=localhost;Port=5000;Username=user;Password=pass");
-await connection.OpenAsync();
-```
-
-Working with different data types:
-
-```csharp
-// Get primitive types
-bool boolValue = await connection.GetAsync<bool>("1b");
-int intValue = await connection.GetAsync<int>("42i");
-double doubleValue = await connection.GetAsync<double>("3.14");
-string stringValue = await connection.GetAsync<string>("\"hello\"");
-
-// Get collections
-int[] intArray = await connection.GetAsync<int[]>("1 2 3 4 5");
-Dictionary<string, object> dict = await connection.GetAsync<Dictionary<string, object>>("`a`b`c!1 2 3");
-
-// Get tables
-KTable table = await connection.GetAsync<KTable>("([] col1:1 2 3; col2:`a`b`c)");
 ```
 
 ## Requirements
 
 - .NET 6.0 or higher
 
-## Building from Source
-
-1. Clone the repository
-2. Run `dotnet tool restore`
-3. Run `dotnet cake --target=Build`
-
-## Running Tests
-
-```bash
-dotnet cake --target=Test
-```
 
 ## Contributing
 
