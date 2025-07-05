@@ -41,38 +41,40 @@ var connection = new KdbConnection(new KdbConnectionOptions
     Password = "password"   // Optional
 });
 
+// h: hopen `:localhost:5000:username:password
 await connection.OpenAsync();
 ```
 
 ### GetAsync - Execute Queries and Get Results
 
 ```csharp
-// Execute simple queries
-var result = await connection.GetAsync<object>("`q`w`e!1 2 3");
-var value = await connection.GetAsync<int>("42i");
+// result: h "2+3"
+var result = await connection.GetAsync<long>("2 + 3");
+// table: h "([] col1:1 2 3; col2:`a`b`c)"
 var table = await connection.GetAsync<KTable>("([] col1:1 2 3; col2:`a`b`c)");
 ```
 
 ### SetAsync - Execute Async Commands
 
 ```csharp
-// Execute commands without waiting for response
+// neg[h] "insert[`trade] (1; `AAPL; 100.5; 1000)"
 await connection.SetAsync("insert[`trade] (1; `AAPL; 100.5; 1000)");
+// neg[h] ".u.sub[`trade;`]"
 await connection.SetAsync(".u.sub[`trade;`]");  // Subscribe to updates
 ```
 
 ### Parameterized Queries with CreateCommand
 
 ```csharp
-// Single parameter
+// h ("{select from trade where sym=x}"; "AAPL")
 var result1 = await connection.CreateCommand("{select from trade where sym=x}", "AAPL")
     .GetAsync<KTable>();
 
-// Multiple parameters
-var result2 = connection.CreateCommand("select from trade where sym=x and size>y", "AAPL", 500)
+// h ("select from trade where sym=x and size>y"; "AAPL"; 500)
+var result2 = connection.CreateCommand("select from trade where sym=x and size>y", "AAPL", 500L)
     .GetAsync<KTable>();
 
-// Async execution with parameters
+// neg[h] ("insert[`trade] (`MSFT; x)"; 150.75)
 var result3 = connection.CreateCommand("insert[`trade] (`MSFT; x)", 150.75)
     .SetAsync();
 ```
