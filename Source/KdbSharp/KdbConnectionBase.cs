@@ -12,6 +12,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
+using System.Buffers;
 using System.Net.Sockets;
 using System.Text;
 using KdbSharp.Extensions;
@@ -40,12 +41,10 @@ public class KdbConnectionBase
         _underlyingConnection ?? throw new InvalidOperationException("Connection is not open.");
 
     private NetworkStream? _stream;
+    private ArrayBufferWriter<byte> _bufferWriter;
+
     private NetworkStream Stream =>
         _stream ?? throw new InvalidOperationException("Connection is not open.");
-
-    // Initialized when the connection is opened.
-    private KReadBuffer _readBuffer = null!;
-    private KWriteBuffer _writeBuffer = null!;
 
     /// <summary>
     /// Gets the protocol version of the opened Kdb+ connection.
@@ -131,9 +130,10 @@ public class KdbConnectionBase
     }
     private void SetupOpenState()
     {
-        _readBuffer = new KReadBuffer();
-        _writeBuffer = new KWriteBuffer();
+        _bufferWriter = new ArrayBufferWriter<byte>();
     }
+    public MemoryPool<byte>? MemoryPool { get; set; }
+
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         // setup tcp connection, protocol handshake
@@ -143,26 +143,23 @@ public class KdbConnectionBase
         SetupOpenState();
 
         // 2. setup tcp connection
-        await OpenConnectionAsync(cancellationToken);
-
+        await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var bufferWriter = _bufferWriter;
+        var writer = new KSerializationWriter(bufferWriter);
         // 4. protocol handshake
-        string credential = Options.Password is null ? $"{Options.Username}" : $"{Options.Username}:{Options.Password}";
-        _writeBuffer.WriteString(credential, TextEncoding);
-        _writeBuffer.WriteByte(KConstant.ClientProtocolVersion); // The client's capability (maximum supported protocol version).
-        _writeBuffer.WriteByte(0); // ASCII NUL
-        await Stream.WriteAsync(_writeBuffer.GetWritedMemory(), cancellationToken);
-        await Stream.FlushAsync(cancellationToken);
-        _writeBuffer.Clear();
+        writeCredential();
+        writer.WriteByte(KConstant.ClientProtocolVersion); // The client's capability (maximum supported protocol version).
+        writer.WriteByte(0); // ASCII NUL
+        await flushAndClearBufferAsync().ConfigureAwait(false);
 
         if (await Stream.ReadAsync(_headerRecvBuffer.AsMemory(0, 1), cancellationToken) != 1)
         {
             Close();
             await OpenConnectionAsync(cancellationToken);
 
-            _writeBuffer.WriteNullTerminatedString(credential, TextEncoding);
-            await Stream.WriteAsync(_writeBuffer.GetWritedMemory(), cancellationToken);
-            await Stream.FlushAsync(cancellationToken);
-            _writeBuffer.Clear();
+            writeCredential();
+            writer.WriteByte(0); // ASCII NUL
+            await flushAndClearBufferAsync().ConfigureAwait(false);
             if (await Stream.ReadAsync(_headerRecvBuffer.AsMemory(0, 1), cancellationToken) != 1)
             {
                 throw new KdbConnectionException("Access denied.");
@@ -171,6 +168,25 @@ public class KdbConnectionBase
 
         // The common capability.
         ProtocolVersion = Math.Min(_headerRecvBuffer[0], KConstant.ClientProtocolVersion);
+
+        void writeCredential()
+        {
+            if (Options.Username is not null)
+            {
+                writer.WriteString(Options.Username, TextEncoding);
+            }
+            if (Options.Password is not null)
+            {
+                writer.WriteString(":", TextEncoding);
+                writer.WriteString(Options.Password, TextEncoding);
+            }
+        }
+        async ValueTask flushAndClearBufferAsync()
+        {
+            await Stream.WriteAsync(bufferWriter.WrittenMemory, cancellationToken);
+            await Stream.FlushAsync(cancellationToken);
+            bufferWriter.Clear();
+        }
     }
 
     // Close the connection
@@ -210,14 +226,15 @@ public class KdbConnectionBase
         // The connection will corrupt if any exception is thrown here.
         try
         {
+            var writer = new KSerializationWriter(_bufferWriter);
             // Serialize message header.
-            _writeBuffer.Write(message.HeaderMeta);
-            _writeBuffer.WriteInt32(message.Size);
+            writer.Write(message.HeaderMeta);
+            writer.WriteInt32(message.Size);
             // Send serialized header and body.
-            await Stream.WriteAsync(_writeBuffer.GetWritedMemory(), cancellation);
+            await Stream.WriteAsync(_bufferWriter.WrittenMemory, cancellation);
             await Stream.WriteAsync(message.Body, cancellation);
             await Stream.FlushAsync(cancellation);
-            _writeBuffer.Clear();
+            _bufferWriter.Clear();
         }
         catch (Exception)
         {
@@ -231,11 +248,7 @@ public class KdbConnectionBase
         try
         {
             await Stream.PopulateMemoryAsync(_headerRecvBuffer, cancellation);
-            _readBuffer.SetBuffer(_headerRecvBuffer);
-
-            var headerMeta = _readBuffer.Read<MessageHeaderMeta>();
-            _readBuffer.IsLittleEndian = headerMeta.Endianess == Endianess.LittleEndian;
-            var messageLen = _readBuffer.ReadInt32();
+            var (headerMeta, messageLen) = ReadMessageHeader(_headerRecvBuffer);
 
             var message = KMessage.Alloc(headerMeta, messageLen);
             await Stream.PopulateMemoryAsync(message.Body, cancellation);
@@ -246,5 +259,14 @@ public class KdbConnectionBase
             Close();
             throw;
         }
+    }
+
+    private static (MessageHeaderMeta headerMeta, int messageLen) ReadMessageHeader(ReadOnlyMemory<byte> headerBuffer)
+    {
+        var reader = new KSerializationReader(headerBuffer);
+        var headerMeta = reader.Read<MessageHeaderMeta>();
+        reader.IsLittleEndian = headerMeta.Endianess.IsLittleEndian();
+        var messageLen = reader.ReadInt32();
+        return (headerMeta, messageLen);
     }
 }

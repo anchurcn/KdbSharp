@@ -1,4 +1,4 @@
-﻿/*
+/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -12,18 +12,81 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
-using System.Text;
-using KdbSharp.Types;
-using System.Text.Json;
+using System;
+using System.Buffers;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
+using System.Text.Json;
 using KdbSharp.Serialization.Converters;
+using KdbSharp.Types;
 
 
 namespace KdbSharp.Serialization;
 
+/// <summary>
+/// A buffer writer that writes to a fixed-size memory.
+/// </summary>
+internal class FixedSizeBufferWriter : IBufferWriter<byte>
+{
+    private readonly Memory<byte> _buffer;
+    private int _written;
 
-public delegate T? ConvertDelegate<T>(KReader reader, KSerializerOptions options);
-public delegate void ConvertBackDelegate<T>(KWriter writer, T? value, KSerializerOptions options);
+    public FixedSizeBufferWriter(Memory<byte> buffer)
+    {
+        _buffer = buffer;
+        _written = 0;
+    }
+
+    public int WrittenCount => _written;
+
+    public void Advance(int count)
+    {
+        if (count < 0 || _written + count > _buffer.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
+        _written += count;
+    }
+
+    public Memory<byte> GetMemory(int sizeHint = 0)
+    {
+        if (sizeHint < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sizeHint));
+        }
+
+        var remaining = _buffer.Length - _written;
+        if (sizeHint > remaining)
+        {
+            throw new InvalidOperationException("Not enough space in buffer");
+        }
+
+        return _buffer.Slice(_written, remaining);
+    }
+
+    public Span<byte> GetSpan(int sizeHint = 0)
+    {
+        if (sizeHint < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sizeHint));
+        }
+
+        var remaining = _buffer.Length - _written;
+        if (sizeHint > remaining)
+        {
+            throw new InvalidOperationException("Not enough space in buffer");
+        }
+
+        return _buffer.Span.Slice(_written, remaining);
+    }
+}
+
+
+
+// SerializeHandler / DeserializeHandler - Struct-based API
+public delegate T? DeserializeHandler<T>(ref KSerializationReader reader, KSerializerOptions options);
+public delegate void SerializeHandler<T>(ref KSerializationWriter writer, T? value, KSerializerOptions options);
 
 /*
      internal void GetInfo(Type? type, ref PgConverterInfo lastConverterInfo, out bool asObject)
@@ -51,58 +114,109 @@ public partial class KSerializer
     //    var info = GetTypeInfo<T>(options);
     //    throw new NotImplementedException();
     //}
-    public static T? Deserialize<T>(ReadOnlyMemory<byte> data, KReaderOptions readerOptions, KSerializerOptions? options = null)
+    /// <summary>
+    /// Deserializes data using the struct-based KSerializationReader.
+    /// </summary>
+    public static T? Deserialize<T>(ReadOnlyMemory<byte> data, KSerializerOptions? options = null)
     {
         options ??= DefaultOptions;
         var info = GetTypeInfo<T>(options);
-        var buffer = new KReadBuffer(data, readerOptions);
-        return info.Deserialize(buffer.KdbReader);
+        var reader = new KSerializationReader(data)
+        {
+            TextEncoding = options.TextEncoding,
+            ProtocolVersion = KConstant.ClientProtocolVersion
+        };
+        return info.Deserialize(ref reader);
     }
-    public static T Deserialize<T>(KReader reader, KSerializerOptions? options = null)
+
+    /// <summary>
+    /// Deserializes data using the struct-based KSerializationReader.
+    /// </summary>
+    public static T? Deserialize<T>(ref KSerializationReader reader, KSerializerOptions? options = null)
     {
         var info = GetTypeInfo<T>(options ?? DefaultOptions);
-        return info.Deserialize(reader);
+        return info.Deserialize(ref reader);
     }
 
-    #region Not impl
-    // Other params: JsonTypeInfo, JsonSerializerContext, options
-    // Type returnType
+    public static T? Deserialize<T>(ref KSerializationReader reader, DeserializeHandler<T> deserializeHandler, KSerializerOptions? options = null)
+    {
+        var info = GetTypeInfo<T>(options ?? DefaultOptions);
+        return info.Deserialize(ref reader);
+    }
 
-    public static T Deserialize<T>(Stream data, KSerializerOptions? options = null)
+    public static object? Deserialize(ref KSerializationReader reader, Type outputType, KSerializerOptions? options = null)
     {
-        throw new NotImplementedException();
+        return default;
     }
-    public static T Deserialize<T>(KReader jsonReader, KSerializerOptions? options = null, ConvertDelegate<T> convert = null!)
+    public static object? Deserialize(ref KSerializationReader reader, DeserializeHandler<object> deserializeHandler, KSerializerOptions? options = null)
     {
-        Deserialize<int>(null, null, (r, o) => default);
-        throw new NotImplementedException();
+        return default;
     }
-    #endregion
+
     #endregion
 
     #region Serialize
 
-    public static int Serialize<T>(Span<byte> output, T value, KSerializerOptions? options = null)
+    /// <summary>
+    /// Serializes a value using the provided KSerializationWriter.
+    /// </summary>
+    public static void Serialize<T>(ref KSerializationWriter writer, T? value, KSerializerOptions? options = null)
     {
-        throw new NotImplementedException();
+        var info = GetTypeInfo<T>(options ?? DefaultOptions);
+        info.Serialize(ref writer, value);
     }
-    public static void Serialize<T>(Stream output, T value, KSerializerOptions? options = null)
+    public static void Serialize<T>(ref KSerializationWriter writer, T? value, KType targetType, KSerializerOptions? options = null)
     {
-        throw new NotImplementedException();
     }
-    public static byte[] Serialize<T>(T value, KSerializerOptions? options = null)
+    public static void Serialize<T>(ref KSerializationWriter writer, T? value, SerializeHandler<T> serializeHandler, KSerializerOptions? options = null)
     {
-        var writeBuffer = new KWriteBuffer(new KWriterOptions()
+    }
+    public static void Serialize(ref KSerializationWriter writer, object? value, Type inputType, KSerializerOptions? options = null)
+    {
+    }
+    public static void Serialize(ref KSerializationWriter writer, object? value,Type inputType, KType targetType, KSerializerOptions? options = null)
+    {
+    }
+    
+    /// <summary>
+    /// Serializes a value to a byte array using the struct-based KSerializationWriter.
+    /// </summary>
+    public static byte[] Serialize<T>(T? value, KSerializerOptions? options = null)
+    {
+        options ??= DefaultOptions;
+        var buffer = new ArrayBufferWriter<byte>();
+        var writer = new KSerializationWriter(buffer)
         {
-            ProtocolVersion = KConstant.ClientProtocolVersion,
-            TextEncoding = options?.TextEncoding ?? Encoding.UTF8,
-        });
-        Serialize(writeBuffer.Writer, value, options);
-        return writeBuffer.ToArray();
+            TextEncoding = options.TextEncoding,
+            ProtocolVersion = KConstant.ClientProtocolVersion
+        };
+
+        var info = GetTypeInfo<T>(options);
+        info.Serialize(ref writer, value);
+        writer.Flush();
+
+        return buffer.WrittenSpan.ToArray();
     }
-    public static void Serialize<T>(Stream writer, T value, Type kt, JsonSerializerOptions? options = null)
+
+    /// <summary>
+    /// Serializes a value to a stream.
+    /// </summary>
+    public static void Serialize<T>(Stream output, T? value, KSerializerOptions? options = null)
     {
+        var buffer = new ArrayBufferWriter<byte>();
+        var writer = new KSerializationWriter(buffer)
+        {
+            TextEncoding = options?.TextEncoding ?? Encoding.UTF8,
+            ProtocolVersion = KConstant.ClientProtocolVersion
+        };
+
+        var info = GetTypeInfo<T>(options ?? DefaultOptions);
+        info.Serialize(ref writer, value);
+        writer.Flush();
+
+        output.Write(buffer.WrittenSpan);
     }
+
     #endregion
 
     public static KTypeInfo GetTypeInfo(Type type, KSerializerOptions options)
@@ -115,68 +229,4 @@ public partial class KSerializer
     {
         return (KTypeInfo<T>)GetTypeInfo(typeof(T), options);
     }
-
-    internal static void Serialize<T>(KWriter writer, T value, KSerializerOptions? options = null)
-    {
-        options ??= DefaultOptions;
-        GetTypeInfo<T>(options).Serialize(writer, value);
-    }
-    public static void Serialize(KWriter writer, object? value, Type inputType, KSerializerOptions? options = null)
-    {
-        options ??= DefaultOptions;
-        GetTypeInfo(inputType, options).SerializeAsObject(writer, value);
-    }
-    internal static void Serialize<T>(KWriter writer, T value, ConvertBackDelegate<T> convert, KSerializerOptions? options = null)
-    {
-        options ??= DefaultOptions;
-        convert(writer, value, options);
-    }
-
-    internal static void Serialize<T>(KWriter writer, T value, KType kt, KSerializerOptions? options = null)
-    {
-        options ??= DefaultOptions;
-        GetTypeInfo<T>(options).Serialize(writer, value, kt);
-    }
 }
-/*
-public class KdbTupleConverter<T> : KTypeConverter<T> where T : ITuple
-{
-    public override bool CanConvert(Type? t, KType? kt)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override bool CanConvert(Type t, KType kt)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override T Read(KReader reader, KSerializerOptions options)
-    {
-        // 来到这里一定是此 Converter 能处理的类型，外部应该做到正确派遣的工作
-        // 这里再次检查类型是否匹配，是为了保证 Converter 的正确性
-        if (reader.CurrentReadType != KType.GeneralList)
-        {
-            throw new InvalidOperationException($"Expected GeneralList, but got {reader.CurrentReadType}");
-        }
-        if (typeof(T) == typeof(ValueTuple<string, string>))
-        {
-            ValueTuple<string, string> res = default;
-            KTypeInfo<string> kdbTypeInfo = new KTypeInfo<string>();
-            res.Item1 = kdbTypeInfo.Deserialize(reader);
-            res.Item2 = kdbTypeInfo.Deserialize(reader);
-        }
-        return default;
-    }
-
-    public override void Write(KWriter writer, T value)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
-    {
-        throw new NotImplementedException();
-    }
-}
-*/

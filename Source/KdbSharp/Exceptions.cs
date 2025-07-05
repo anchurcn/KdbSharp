@@ -1,4 +1,4 @@
-﻿/*
+/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -75,12 +75,12 @@ public class KdbProtocolException : Exception
 }
 
 [Serializable]
-public class MessageSerializationException : Exception
+public class KSerializationException : Exception
 {
-    public MessageSerializationException() { }
-    public MessageSerializationException(string message) : base(message) { }
-    public MessageSerializationException(string message, Exception inner) : base(message, inner) { }
-    protected MessageSerializationException(
+    public KSerializationException() { }
+    public KSerializationException(string message) : base(message) { }
+    public KSerializationException(string message, Exception inner) : base(message, inner) { }
+    protected KSerializationException(
       System.Runtime.Serialization.SerializationInfo info,
       System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 }

@@ -14,12 +14,14 @@
 */
 using KdbSharp.Serialization;
 using KdbSharp.Types;
+using System.Buffers;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace KdbSharp;
 
 public readonly struct KdbCommand<T>
+    where T : struct
 {
     private readonly T _parameterizedQuery;
     private readonly KdbConnection _connection;
@@ -31,101 +33,77 @@ public readonly struct KdbCommand<T>
 
     public async Task<TResult?> GetAsync<TResult>(KSerializerOptions? options = null, CancellationToken cancellation = default)
     {
-        await _connection.SendParameterizedRequestAsync(_parameterizedQuery, options, cancellation);
+        await _connection.SendParameterizedQueryObjectAsync(_parameterizedQuery, MessageType.Request, options, cancellation);
         return await _connection.RecvResponseObjectAsync<TResult>(options, cancellation);
     }
 
+    public Task<object?> GetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
+    {
+        return GetAsync<object?>(options, cancellation);
+    }
     public Task SetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
     {
-        return _connection.SendParameterizedAsyncAsync(_parameterizedQuery, options, cancellation);
+        return _connection.SendParameterizedQueryObjectAsync(_parameterizedQuery, MessageType.Async, options, cancellation);
     }
+
+    #region MayRemove
+    public async Task<TResult?> GetAsync<TResult>(SerializeHandler<T> serializeHandler,
+        DeserializeHandler<TResult?> deserializeHandler, KSerializerOptions options,
+        CancellationToken cancellation = default)
+    {
+        // 这个方法承担了太多的职责，如果真要有那么多自定义的序列化和反序列化逻辑，
+        // 应该使用 KSerializer.Serialize 和 Deserialize 方法来处理
+        throw new NotImplementedException();
+    }
+
+    public Task SetAsync(SerializeHandler<T> serializeHandler, KSerializerOptions? options = null, CancellationToken cancellation = default)
+    {
+        throw new NotImplementedException();
+    }
+    #endregion
 }
 
 public class KdbConnection : KdbConnectionBase
 {
-    #region Write
 
-    private readonly KWriteBuffer _writeBuffer;
-    private KWriter Writer => _writeBuffer.Writer;
-    private readonly KMessage _messageWrite = KMessage.CreateReusable();
-    #endregion
-
-    #region Read
-
-    private readonly KReaderOptions _readerOptions;
-    #endregion
-
-    public KdbConnection(KdbConnectionOptions options, KReaderOptions? readerOptions = null) : base(options)
+    public KdbConnection(KdbConnectionOptions options) : base(options)
     {
-        _readerOptions = readerOptions ?? new KReaderOptions()
-        {
-            TextEncoding = TextEncoding,
-            IsLittleEndian = true
-        };
-        _writeBuffer = new KWriteBuffer(new KWriterOptions() { ProtocolVersion = ProtocolVersion });
     }
+    private readonly ArrayBufferWriter<byte> _bufferWriter = new();
 
-    public async Task SendRequestAsync(string expr, KSerializerOptions? options, CancellationToken cancellation)
-    {
-        KSerializer.Serialize(Writer, expr, KType.CharList, options);
-        _messageWrite.RepackMessage(MessageType.Request, Writer.Buffer.IsLittleEndian, Writer.Buffer.GetWritedMemory());
-        await SendAsync(_messageWrite, cancellation);
-        Writer.Buffer.Clear();
-    }
-    
+
     // Where T is ValueTuple and if first is string then serialize as KType.CharList.
     class ParameterizedQueryConverter<T>
     {
         static readonly FieldInfo[] _orderedTupleFields;
         static ParameterizedQueryConverter()
         {
-            var tupleType =typeof(T);
+            var tupleType = typeof(T);
             var tupleFields = tupleType.GetFields();
             // By convention, the field name is Item<n> where n is the 1-based index of the field.
             // The fields are ordered by the declaration order, but we order here explicitly by the field name.
             _orderedTupleFields = tupleFields.OrderBy(f => f.Name).ToArray();
         }
 
-        public static void Write(KWriter writer, T value, KSerializerOptions options)
+        public static void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
         {
-            writer.WriteStartList(KType.GeneralList, _orderedTupleFields.Length);
-            KSerializer.Serialize(writer, (string)_orderedTupleFields[0].GetValue(value)!, KType.CharList, options);
+            writer.StartWriteList(KType.GeneralList, _orderedTupleFields.Length);
+            KSerializer.Serialize(ref writer, (string)_orderedTupleFields[0].GetValue(value)!, KType.CharList, options);
             for (int i = 1; i < _orderedTupleFields.Length; i++)
             {
                 var field = _orderedTupleFields[i];
                 var item = field.GetValue(value);
-                KSerializer.Serialize(writer, item, field.FieldType, options);
+                KSerializer.Serialize(ref writer, item, field.FieldType, options);
             }
-            writer.WriteEndList();
+            writer.EndWriteList();
         }
     }
-    internal async Task SendParameterizedRequestAsync<T>(T value, KSerializerOptions? options, CancellationToken cancellation)
-    {
-        KSerializer.Serialize(Writer, value, ConvertParameterizedQuery, options);
-        _messageWrite.RepackMessage(MessageType.Request, Writer.Buffer.IsLittleEndian, Writer.Buffer.GetWritedMemory());
-        await SendAsync(_messageWrite, cancellation);
-        Writer.Buffer.Clear();
-        
-        static void ConvertParameterizedQuery(KWriter writer, T? value, KSerializerOptions options)
-        {
-            var type = typeof(T);
-            // Check if T is ValueTuple and the first field is string.
-            if (type.Name.Contains(nameof(ValueTuple)) && type.GetField("Item1")?.FieldType == typeof(string))
-            {
-                ParameterizedQueryConverter<T>.Write(writer, value!, options);
-            }
-            else
-            {
-                throw new InvalidOperationException("Not a parameterized query.");
-            }
-        }
-    }
-    internal async Task<T?> RecvResponseObjectAsync<T>(KSerializerOptions? options , CancellationToken cancellation)
+    public async Task<T?> RecvResponseObjectAsync<T>(KSerializerOptions? options, CancellationToken cancellation)
     {
         var message = await RecvAsync(cancellation);
         if (message.Type != MessageType.Response)
         {
-            throw new InvalidOperationException("Unexpected message type.");
+            throw new InvalidOperationException($"Unexpected message type {message.Type}.");
         }
         if (message.Compressed)
         {
@@ -133,25 +111,41 @@ public class KdbConnection : KdbConnectionBase
             message = KMessage.Uncompress(message);
             uncompressed.Dispose();
         }
-        _readerOptions.IsLittleEndian = message.IsLittleEndian;
-        _readerOptions.TextEncoding = TextEncoding;
-        return KSerializer.Deserialize<T>(message.Body, _readerOptions, options);
+        return DeserializeMessage<T>(message, options);
     }
 
-    internal async Task SendParameterizedAsyncAsync<T>(T value, KSerializerOptions? options, CancellationToken cancellation)
+    private static T? DeserializeMessage<T>(KMessage message, KSerializerOptions? options)
     {
-        KSerializer.Serialize(Writer, value, ConvertParameterizedQuery, options);
-        _messageWrite.RepackMessage(MessageType.Async, Writer.Buffer.IsLittleEndian, Writer.Buffer.GetWritedMemory());
-        await SendAsync(_messageWrite, cancellation);
-        Writer.Buffer.Clear();
-
-        static void ConvertParameterizedQuery(KWriter writer, T? value, KSerializerOptions options)
+        var reader = new KSerializationReader(message.Body)
         {
-            var type = typeof(T);
+            IsLittleEndian = message.IsLittleEndian,
+        };
+        return KSerializer.Deserialize<T>(ref reader, options);
+    }
+    public async Task SendQueryObjectAsync(string expr, MessageType messageType, KSerializerOptions? options, CancellationToken cancellation)
+    {
+        var bufferWriter = new ArrayBufferWriter<byte>();
+        var writer = new KSerializationWriter(bufferWriter);
+        KSerializer.Serialize(ref writer, expr, KType.CharList, options);
+        await SendAsync(bufferWriter.WrittenMemory, messageType, writer.IsLittleEndian, false, cancellation).ConfigureAwait(false);
+        bufferWriter.Clear();
+    }
+    public async Task SendParameterizedQueryObjectAsync<TQuery>(TQuery parameterizedQuery, MessageType messageType, KSerializerOptions? options, CancellationToken cancellation)
+        where TQuery: struct
+    {
+        var bufferWriter = new ArrayBufferWriter<byte>();
+        var writer = new KSerializationWriter(bufferWriter);
+        KSerializer.Serialize(ref writer, parameterizedQuery, ConvertParameterizedQuery, options);
+        await SendAsync(bufferWriter.WrittenMemory, messageType, writer.IsLittleEndian, false, cancellation).ConfigureAwait(false);
+        bufferWriter.Clear();
+
+        static void ConvertParameterizedQuery(ref KSerializationWriter writer, TQuery value, KSerializerOptions options)
+        {
+            var type = typeof(TQuery);
             // Check if T is ValueTuple and the first field is string.
             if (type.Name.Contains(nameof(ValueTuple)) && type.GetField("Item1")?.FieldType == typeof(string))
             {
-                ParameterizedQueryConverter<T>.Write(writer, value!, options);
+                ParameterizedQueryConverter<TQuery>.Write(ref writer, value, options);
             }
             else
             {
@@ -159,15 +153,33 @@ public class KdbConnection : KdbConnectionBase
             }
         }
     }
+        public async Task SendMessage(ReadOnlyMemory<byte> uncompressedBody, MessageType type, bool isLittleEndian, CancellationToken cancellation = default)
+    {
+        // TODO: compress body if needed
+        await SendAsync(uncompressedBody, type, isLittleEndian, compressed:false, cancellation).ConfigureAwait(false);
+    }
+
+    private async Task SendAsync(ReadOnlyMemory<byte> body, MessageType type, bool isLittleEndian, bool compressed, CancellationToken cancellation)
+        => throw new NotImplementedException();
+
+    // Impl SendAsync and RecvAsync but without using KMessage.
+
 
     // Reader/Writer holds a buffer, and KMessage can just reference the buffer by Memory<byte>(a view of part of the buffer).
     public async Task<TResult?> GetAsync<TResult>(string expr, KSerializerOptions? options = null, CancellationToken cancellation = default)
     {
-        await SendRequestAsync(expr, options, cancellation);
+        await SendQueryObjectAsync(expr, MessageType.Request, options, cancellation);
         return await RecvResponseObjectAsync<TResult>(options, cancellation);
     }
 
+    public Task SetAsync(string expr, CancellationToken cancellation = default)
+    {
+        // Serialize and send an async KMessage.
+        return SendQueryObjectAsync(expr, MessageType.Async, null, cancellation);
+    }
+
     static KdbCommand<T> CreateCommandInternal<T>(T parameterizedQuery, KdbConnection connection)
+        where T : struct
     {
         return new KdbCommand<T>(parameterizedQuery, connection);
     }
@@ -215,42 +227,6 @@ public class KdbConnection : KdbConnectionBase
     }
     #endregion
 
-    #region Subscription
-
-    public Task SetAsync(string expr, CancellationToken cancellation = default)
-    {
-        // Serialize and send an async KMessage.
-        KSerializer.Serialize(Writer, expr, KType.CharList);
-        _messageWrite.RepackMessage(MessageType.Async, Writer.Buffer.IsLittleEndian, Writer.Buffer.GetWritedMemory());
-
-        return SendAsync(_messageWrite, cancellation);
-    }
-
-    public async IAsyncEnumerable<KMessage> Subscribe([EnumeratorCancellation] CancellationToken cancellation = default)
-    {
-        while (!cancellation.IsCancellationRequested)
-        {
-            var message = await RecvAsync(cancellation);
-            if (message.Type != MessageType.Async)
-            {
-                if (message.Type == MessageType.Request)
-                {
-                    // TODO: SendMessage(Response, "Unexpected request message.")
-                    throw new InvalidOperationException("Unexpected request message.");
-                }
-                else if(message.Type == MessageType.Response)
-                {
-                    throw new InvalidOperationException("Unexpected response message.");
-                }
-                else
-                {
-                    throw new InvalidOperationException("Unknown message type.");
-                }
-            }
-            yield return message;
-        }
-    }
-    #endregion
 }
 
 public static class ConnectionExtensions

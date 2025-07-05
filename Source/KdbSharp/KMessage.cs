@@ -35,6 +35,12 @@ public enum Endianess : byte
     LittleEndian
 }
 
+public static class EndianessExtensions
+{
+    public static bool IsLittleEndian(this Endianess endianess)
+        => endianess == Endianess.LittleEndian;
+}
+
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe struct MessageHeaderMeta
 {

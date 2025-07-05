@@ -49,6 +49,7 @@ internal ref partial struct SequenceReader<T>
     /// </summary>
     private long length;
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="SequenceReader{T}"/> struct
     /// over the given <see cref="ReadOnlySequence{T}"/>.
@@ -75,6 +76,8 @@ internal ref partial struct SequenceReader<T>
             this.GetNextSpan();
         }
     }
+
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SequenceReader{T}"/> struct

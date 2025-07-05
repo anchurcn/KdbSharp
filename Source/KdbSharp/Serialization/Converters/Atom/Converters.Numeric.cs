@@ -49,7 +49,7 @@ public class KRealConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Real;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadReal();
         var value = rawValue.Value;
@@ -78,7 +78,7 @@ public class KRealConverter<T> : KTypeConverter<T>
         }
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (value is KReal kreal)
         {
@@ -139,7 +139,7 @@ public class KFloatConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Float;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadFloat();
         var value = rawValue.Value;
@@ -168,7 +168,7 @@ public class KFloatConverter<T> : KTypeConverter<T>
         }
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (value is KFloat kfloat)
         {
@@ -231,7 +231,7 @@ public class KShortConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Short;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadShort();
         var value = rawValue.Value;
@@ -258,7 +258,7 @@ public class KShortConverter<T> : KTypeConverter<T>
         throw new NotSupportedException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (value is KShort kshort)
         {
@@ -319,7 +319,7 @@ public class KIntConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Int;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadInt();
         var value = rawValue.Value;
@@ -346,7 +346,7 @@ public class KIntConverter<T> : KTypeConverter<T>
         throw new NotSupportedException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (value is KInt kint)
         {
@@ -408,7 +408,7 @@ public class KLongConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Long;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadLong();
         var value = rawValue.Value;
@@ -435,7 +435,7 @@ public class KLongConverter<T> : KTypeConverter<T>
         throw new NotSupportedException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (value is KLong klong)
         {

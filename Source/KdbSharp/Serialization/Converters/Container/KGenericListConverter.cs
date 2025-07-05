@@ -28,29 +28,29 @@ namespace KdbSharp.Serialization.Converters
             return kt == KType.GeneralList && t == typeof(object[]);
         }
 
-        public override object[] Read(KReader reader, KSerializerOptions options)
+        public override object[] Read(ref KSerializationReader reader, KSerializerOptions options)
         {
-            var len = reader.ListLength ?? throw new MessageSerializationException("Array length is null.");
+            var len = reader.ListLength ?? throw new KSerializationException("Array length is null.");
             var arr = new object[len];
             for (int i = 0; i < len; i++)
             {
                 var elemType = reader.BeginReadType();
                 var elemTypeInfo = options.GetTypeInfo(typeof(object));
-                arr[i] = elemTypeInfo.DeserializeAsObject(reader)!;
+                arr[i] = elemTypeInfo.DeserializeAsObject(ref reader)!;
                 reader.EndReadType();
             }
             return arr;
         }
 
-        public override void Write(KWriter writer, object[] value, KSerializerOptions options)
+        public override void Write(ref KSerializationWriter writer, object[] value, KSerializerOptions options)
         {
-            writer.WriteStartList(KType.GeneralList, value.Length);
+            writer.StartWriteList(KType.GeneralList, value.Length);
             foreach (var elem in value)
             {
                 var elemTypeInfo = options.GetTypeInfo(typeof(object));
-                elemTypeInfo.SerializeAsObject(writer, elem);
+                elemTypeInfo.SerializeAsObject(ref writer, elem);
             }
-            writer.WriteEndList();
+            writer.EndWriteList();
         }
     }
 }

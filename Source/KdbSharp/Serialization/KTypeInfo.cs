@@ -36,8 +36,8 @@ public abstract class KTypeInfo
     //public KType KType { get; set; } // TODO: remove
 
     public abstract Type Type { get; }
-    public abstract object? DeserializeAsObject(KReader reader);
-    public abstract void SerializeAsObject(KWriter reader, object? value, KType? kt = null);
+    public abstract object? DeserializeAsObject(ref KSerializationReader reader);
+    public abstract void SerializeAsObject(ref KSerializationWriter writer, object? value, KType? kt = null);
 
     // Resolve from Options if not exists key, then add to cache.
     // If key exists, but value is null, then return false.
@@ -49,16 +49,7 @@ public abstract class KTypeInfo
         }
         else
         {
-            if (Type == ObjectType)
-            {
-                converter = Options.GetConverter(kt);
-                if (converter is not null)
-                    converter = new ShimObjectConverter(converter);
-            }
-            else
-            {
-                converter = Options.GetConverter(Type, kt);
-            }
+            converter = Options.GetConverter(Type, kt);
             Converters.Add(kt, converter);
             return converter is not null;
         }
@@ -67,8 +58,8 @@ public abstract class KTypeInfo
     {
         if (TryGetConverter(t, out var c))
         {
-            converter = (KTypeConverter<T>)c!;
-            return true;
+            converter = c as KTypeConverter<T>;
+            return converter is not null;
         }
         else
         {
@@ -95,25 +86,16 @@ public class KTypeInfo<T> : KTypeInfo
 
     public override Type Type => typeof(T);
 
-    public T? Deserialize(KReader reader)
+    public virtual T? Deserialize(ref KSerializationReader reader)
     {
         var res = default(T);
         var kt = reader.BeginReadType();
-
-        #region Fast path
-
-        //var lastChildKt = reader.LastNestedType;
-        //if (lastChildKt is not null && kt == lastChildKt)
-        //{
-        //    res = reader.GetLastNestedTypeConverter<T>().Read(reader, Options);
-        //}
-        #endregion
 
         // 如果有显式的 Converter，就用它，否则使用默认行为
         // 例如如果请求类型是 Unit，会走显式的 Converter
         if (TryGetConverter<T>(kt, out var converter))
         {
-            res = converter.Read(reader, Options);
+            res = converter.Read(ref reader, Options);
         }
         else
         {
@@ -124,7 +106,7 @@ public class KTypeInfo<T> : KTypeInfo
             {
                 if (Options.NullHandleStategy == NullHandleStrategy.Default)
                 {
-                    _ = Options.GetConverterByTypeInfo<KUnit>(kt)?.Read(reader, Options)
+                    _ = Options.GetConverterByTypeInfo<KUnit>(kt)?.Read(ref reader, Options)
                         ?? throw new InvalidOperationException("No converter registered for Unit type.");
                     if (Type.IsValueType)
                     {
@@ -145,7 +127,7 @@ public class KTypeInfo<T> : KTypeInfo
             }
             else if (kt == KType.Error)
             {
-                var error = Options.GetConverterByTypeInfo<KdbException>(kt)?.Read(reader, Options)
+                var error = Options.GetConverterByTypeInfo<KdbException>(kt)?.Read(ref reader, Options)
                     ?? throw new InvalidOperationException("No converter registered for Error type.");
                 throw error;
             }
@@ -159,18 +141,17 @@ public class KTypeInfo<T> : KTypeInfo
         return res;
     }
 
-    public override object? DeserializeAsObject(KReader reader)
+    public override object? DeserializeAsObject(ref KSerializationReader reader)
     {
-        return Deserialize(reader);
+        return Deserialize(ref reader);
     }
 
-
-    public void Serialize(KWriter writer, T? value, KType? kType = null)
+    public virtual void Serialize(ref KSerializationWriter writer, T? value, KType? kType = null)
     {
         // Delegate to actual type's type info.
         if (Type == ObjectType && value is not null)
         {
-            Options.GetTypeInfoForRootType(value.GetType()).SerializeAsObject(writer, value, kType);
+            Options.GetTypeInfoForRootType(value.GetType()).SerializeAsObject(ref writer, value, kType);
             return;
         }
         else if (Type == ObjectType && value is null)
@@ -180,11 +161,11 @@ public class KTypeInfo<T> : KTypeInfo
 
         if (kType is null && TryGetConverter<T>(out var defaultConverter))
         {
-            defaultConverter.Write(writer, value!, Options);
+            defaultConverter.Write(ref writer, value!, Options);
         }
         else if (kType is KType kt && TryGetConverter<T>(kt, out var converter))
         {
-            converter.Write(writer, value!, Options);
+            converter.Write(ref writer, value!, Options);
         }
         else
         {
@@ -199,32 +180,61 @@ public class KTypeInfo<T> : KTypeInfo
         }
     }
 
-    public override void SerializeAsObject(KWriter writer, object? value, KType? kt = null)
+    public override void SerializeAsObject(ref KSerializationWriter writer, object? value, KType? kt = null)
     {
-        Serialize(writer, (T?)value, kt);
+        Serialize(ref writer, (T?)value, kt);
     }
 }
 
-public class ShimObjectConverter : KTypeConverter<object>
+public class ObjectTypeInfo : KTypeInfo<object>
 {
-    public ShimObjectConverter(KTypeConverter converter)
+    public ObjectTypeInfo(KSerializerOptions options):base(options)
     {
-        Converter = converter;
+        
     }
-    public KTypeConverter Converter { get; }
+    public override Type Type => ObjectType;
 
-    public override bool CanConvert(Type t, KType kt)
+    public override object? Deserialize(ref KSerializationReader reader)
     {
-        throw new NotSupportedException();
+        var nextTypeStamp = reader.NextTypeStamp;
+        if (TryGetConverter(nextTypeStamp, out var converter))
+        {
+            return converter.ReadAsObject(ref reader, Options);
+        }
+        else
+        {
+            throw new KSerializationException($"Converter of KType {nextTypeStamp} not found.");
+        }
     }
 
-    public override object Read(KReader reader, KSerializerOptions options)
+    public override void Serialize(ref KSerializationWriter writer, object? value, KType? kType = null)
     {
-        return Converter.ReadAsObject(reader, options)!;
-    }
-
-    public override void Write(KWriter writer, object value, KSerializerOptions options)
-    {
-        throw new NotSupportedException();
+        if (kType is null)
+        {
+            if (value is null)
+            {
+                writer.WriteUnaryPrimitive(UnaryPrimitive.Unit);
+            }
+            else
+            {
+                Options.GetTypeInfo(value.GetType()).SerializeAsObject(ref writer, Options);
+            }
+        }
+        else
+        {
+            if (value is null)
+            {
+                // TODO: GetConverter of kType, let it write the proper 'null' value
+                // for the kType,
+                // 这要求 Converter 实现 WriteAsObject，当传入 null 则写入 null 值，
+                // 比如 KIntConverter 写 Kint.Null，BooleanConverter 抛出异常
+                // 其他写 UnaryPrimitive.Unit
+                throw new NotImplementedException();
+            }
+            else
+            {
+                Options.GetTypeInfo(value.GetType()).SerializeAsObject(ref writer, value, kType);
+            }
+        }
     }
 }

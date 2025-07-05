@@ -35,13 +35,13 @@ public class EnumToSymbolConverterFactory : KTypeConverterFactory
             return t == TypeToConvert && kt == KType.Symbol;
         }
 
-        public override T Read(KReader reader, KSerializerOptions options)
+        public override T Read(ref KSerializationReader reader, KSerializerOptions options)
         {
             var str = reader.ReadSymbol();
             return Enum.Parse<T>(str);
         }
 
-        public override void Write(KWriter writer, T value, KSerializerOptions options)
+        public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
         {
             writer.WriteSymbol(value.ToString(), options.TextEncoding);
         }

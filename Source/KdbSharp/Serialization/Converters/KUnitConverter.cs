@@ -23,7 +23,7 @@ public class KUnitConverter : KTypeConverter<KUnit>
         return kt == KType.UnaryPrimitive && t == TypeToConvert;
     }
 
-    public override KUnit Read(KReader reader, KSerializerOptions options)
+    public override KUnit Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (reader.ReadByte() != 0)
         {
@@ -32,7 +32,7 @@ public class KUnitConverter : KTypeConverter<KUnit>
         return KUnit.Value;
     }
 
-    public override void Write(KWriter writer, KUnit value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, KUnit value, KSerializerOptions options)
     {
         writer.BeginWriteType(KType.UnaryPrimitive);
         writer.WriteByte(0);

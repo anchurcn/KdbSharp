@@ -75,7 +75,7 @@ public class KArrayConverter<TElem> : KTypeConverter<TElem[]>
         return KTypeHelper.IsAtomList(kt) && t.IsArray;
     }
 
-    public override TElem[] Read(KReader reader, KSerializerOptions options)
+    public override TElem[] Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if(reader.TypeStamp != _kt)
         {
@@ -92,24 +92,24 @@ public class KArrayConverter<TElem> : KTypeConverter<TElem[]>
         var arr = new TElem[count];
         for (int i = 0; i < count; i++)
         {
-            arr[i] = _elemConverter.Read(reader, options);
+            arr[i] = _elemConverter.Read(ref reader, options);
         }
         return arr;
     }
 
-    public override void Write(KWriter writer, TElem[] value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, TElem[] value, KSerializerOptions options)
     {
         if(_elemConverter is null)
         {
             throw new InvalidOperationException();
         }
 
-        writer.WriteStartList(_kt, value.Length);
+        writer.StartWriteList(_kt, value.Length);
         foreach (var item in value)
         {
-            _elemConverter.Write(writer, item, options);
+            _elemConverter.Write(ref writer, item, options);
         }
-        writer.WriteEndList();
+        writer.EndWriteList();
     }
 }
 
@@ -128,7 +128,7 @@ public class KAtomListConverter<TElem,T> : KTypeConverter<T>
         return KTypeHelper.IsAtomList(kt) && t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>);
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if(reader.TypeStamp != _kt)
         {
@@ -145,27 +145,27 @@ public class KAtomListConverter<TElem,T> : KTypeConverter<T>
         var list = (IList<TElem>)Activator.CreateInstance<T>()!;
         for (int i = 0; i < count; i++)
         {
-            list.Add(_elemConverter.Read(reader, options));
+            list.Add(_elemConverter.Read(ref reader, options));
         }
         return (T)list;
     }
 
-    public void Write(KWriter writer, IList<TElem> value, KSerializerOptions options)
+    public void Write(ref KSerializationWriter writer, IList<TElem> value, KSerializerOptions options)
     {
         if(_elemConverter is null)
         {
             throw new InvalidOperationException();
         }
 
-        writer.WriteStartList(_kt, value.Count);
+        writer.StartWriteList(_kt, value.Count);
         foreach (var item in value)
         {
-            _elemConverter.Write(writer, item, options);
+            _elemConverter.Write(ref writer, item, options);
         }
-        writer.WriteEndList();
+        writer.EndWriteList();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         throw new NotImplementedException();
     }

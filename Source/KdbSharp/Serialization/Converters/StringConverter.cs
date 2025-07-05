@@ -27,12 +27,12 @@ namespace KdbSharp.Serialization.Converters
         {
             return t == TypeToConvert && kt == KType.CharList;
         }
-        public override string Read(KReader reader, KSerializerOptions options)
+        public override string Read(ref KSerializationReader reader, KSerializerOptions options)
         {
-            return reader.Buffer.ReadString(reader.ListLength.GetValueOrDefault());
+            return reader.ReadString(reader.ListLength.GetValueOrDefault());
         }
 
-        public override void Write(KWriter writer, string value, KSerializerOptions options)
+        public override void Write(ref KSerializationWriter writer, string value, KSerializerOptions options)
         {
             writer.WriteCharList(value, options.TextEncoding);
         }

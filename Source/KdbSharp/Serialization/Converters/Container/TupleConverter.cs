@@ -25,33 +25,33 @@ public class ValueTupleConverter<T> : KTypeConverter<T> where T : ITuple
         return t == TypeToConvert && kt == KType.GeneralList;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        var len = reader.ListLength ?? throw new MessageSerializationException("Array length is null.");
+        var len = reader.ListLength ?? throw new KSerializationException("Array length is null.");
         var res = (ITuple)default(T)!;
         var fields = typeof(T).GetFields();
         for (int i = 0; i < len; i++)
         {
             var field = fields[i];
             var elemTypeInfo = options.GetTypeInfo(field.FieldType);
-            var elem = elemTypeInfo.DeserializeAsObject(reader)!;
+            var elem = elemTypeInfo.DeserializeAsObject(ref reader)!;
             fields[i].SetValue(res, elem);
         }
         return (T)res;
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        writer.WriteStartList(KType.GeneralList, value.Length);
+        writer.StartWriteList(KType.GeneralList, value.Length);
         var fields = typeof(T).GetFields();
         for (int i = 0; i < value.Length; i++)
         {
             var field = fields[i];
             var elem = value[i];
             var elemTypeInfo = options.GetTypeInfo(field.FieldType);
-            elemTypeInfo.SerializeAsObject(writer, elem);
+            elemTypeInfo.SerializeAsObject(ref writer, elem);
         }
-        writer.WriteEndList();
+        writer.EndWriteList();
     }
 }
 

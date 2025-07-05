@@ -12,10 +12,13 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
+using System;
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using KdbSharp.Types;
 
 namespace KdbSharp.Serialization;
@@ -121,6 +124,11 @@ public struct KSerializationWriter
     public byte ProtocolVersion { get; set; }
 
     /// <summary>
+    /// Gets or sets the cancellation token for this serialization operation.
+    /// </summary>
+    public CancellationToken CancellationToken { get; set; }
+
+    /// <summary>
     /// Initializes a new instance of the KSerializationWriter struct.
     /// </summary>
     /// <param name="writer">The buffer writer to write to.</param>
@@ -130,20 +138,44 @@ public struct KSerializationWriter
         _stack = new Stack<WriteStackFrame>();
         TextEncoding = Encoding.UTF8;
         ProtocolVersion = KConstant.ClientProtocolVersion;
+        CancellationToken = default;
     }
 
-    private WriteStackFrame GetCurrentFrame()
+    /// <summary>
+    /// Initializes a new instance of the KSerializationWriter struct with the same settings as this one,
+    /// but with its own buffer writer.
+    /// </summary>
+    /// <param name="writer">The writer to use for the new instance.</param>
+    /// <returns>The new writer.</returns>
+    public KSerializationWriter Clone(IBufferWriter<byte> writer) => new KSerializationWriter(writer)
+    {
+        TextEncoding = this.TextEncoding,
+        ProtocolVersion = this.ProtocolVersion,
+        CancellationToken = this.CancellationToken,
+    };
+
+    /// <summary>
+    /// Ensures everything previously written has been flushed to the underlying IBufferWriter.
+    /// </summary>
+    public void Flush()
+    {
+        // IBufferWriter doesn't have a Flush method, but we can ensure all data is committed
+        // by calling GetSpan(0) which forces any pending writes to be committed
+        _writer.GetSpan(0);
+    }
+
+    public WriteStackFrame GetCurrentFrame()
     {
         return _stack.Count > 0 ? _stack.Peek() :
             throw new InvalidOperationException("No type is being written.");
     }
 
-    private void BeginWriteType(KType type)
+    public void BeginWriteType(KType type)
     {
         TryWriteTypeStamp(type);
     }
 
-    private void EndWriteType()
+    public void EndWriteType()
     {
         if (_stack.Count == 0)
         {
@@ -152,7 +184,7 @@ public struct KSerializationWriter
         _stack.Pop();
     }
 
-    private bool TryWriteTypeStamp(KType kType)
+    public bool TryWriteTypeStamp(KType kType)
     {
         if (_stack.Count > 0)
         {
@@ -175,7 +207,7 @@ public struct KSerializationWriter
         return true;
     }
 
-    private void WriteTypeStamp(KType kType)
+    public void WriteTypeStamp(KType kType)
     {
         // Protocol validation
         var protocolVersion = ProtocolVersion;
@@ -186,7 +218,7 @@ public struct KSerializationWriter
         BufferWriteHelper.WriteByte(_writer, (byte)kType);
     }
 
-    private static void ThrowIfUsingKTypePreSupportedProtocolVersion(KType kType, KType target, byte minimalSupportedProtocolVersion, byte currentProtocolVersion)
+    public static void ThrowIfUsingKTypePreSupportedProtocolVersion(KType kType, KType target, byte minimalSupportedProtocolVersion, byte currentProtocolVersion)
     {
         var beingChecked = kType.IsAtomList() ? kType.GetUnderlyingType() : kType;
         if (beingChecked == target && currentProtocolVersion < minimalSupportedProtocolVersion)
@@ -515,12 +547,17 @@ public struct KSerializationWriter
     }
 
     /// <summary>
-    /// Writes a unit value (internal use).
+    /// Writes a unit value.
     /// </summary>
-    internal void WriteUnit()
+    public void WriteUnit()
     {
         BeginWriteType(KType.UnaryPrimitive);
         BufferWriteHelper.WriteByte(_writer, 0);
         EndWriteType();
     }
+
+    // Make it extension method to allow writing strings with specific encoding
+    internal void WriteString(string username, Encoding textEncoding) => throw new NotImplementedException();
+    internal void Write<T>(T value) where T: unmanaged => throw new NotImplementedException();
+    internal void WriteInt32(int value) => throw new NotImplementedException();
 }

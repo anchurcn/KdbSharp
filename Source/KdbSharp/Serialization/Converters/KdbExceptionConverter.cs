@@ -23,13 +23,13 @@ public class KdbExceptionConverter : KTypeConverter<KdbException>
         return kt == KType.Error && t == TypeToConvert;
     }
 
-    public override KdbException Read(KReader reader, KSerializerOptions options)
+    public override KdbException Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var errorMessage = reader.ReadSymbol();
         return KdbException.CreateFromKdbErrorMessage(errorMessage);
     }
 
-    public override void Write(KWriter writer, KdbException value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, KdbException value, KSerializerOptions options)
     {
         writer.BeginWriteType(KType.Error);
         writer.WriteSymbol(value.Message, options.TextEncoding);

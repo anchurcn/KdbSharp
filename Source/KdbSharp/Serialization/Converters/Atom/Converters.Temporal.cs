@@ -41,7 +41,7 @@ public class KTimestampConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Timestamp;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(DateTime))
         {
@@ -59,7 +59,7 @@ public class KTimestampConverter<T> : KTypeConverter<T>
         throw new InvalidOperationException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(DateTime))
         {
@@ -104,7 +104,7 @@ public class KMonthConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Month;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(DateTime))
         {
@@ -122,7 +122,7 @@ public class KMonthConverter<T> : KTypeConverter<T>
         throw new InvalidOperationException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(DateTime))
         {
@@ -167,7 +167,7 @@ public class KDateConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Date;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(DateTime))
         {
@@ -185,7 +185,7 @@ public class KDateConverter<T> : KTypeConverter<T>
         throw new InvalidOperationException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(DateTime))
         {
@@ -230,7 +230,7 @@ public class KDateTimeConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.DateTime;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(DateTime))
         {
@@ -248,7 +248,7 @@ public class KDateTimeConverter<T> : KTypeConverter<T>
         throw new InvalidOperationException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(DateTime))
         {
@@ -293,7 +293,7 @@ public class KTimeSpanConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.TimeSpan;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(TimeSpan))
         {
@@ -311,7 +311,7 @@ public class KTimeSpanConverter<T> : KTypeConverter<T>
         throw new InvalidOperationException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(TimeSpan))
         {
@@ -356,7 +356,7 @@ public class KMinuteConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Minute;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(TimeSpan))
         {
@@ -374,7 +374,7 @@ public class KMinuteConverter<T> : KTypeConverter<T>
         throw new InvalidOperationException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(TimeSpan))
         {
@@ -420,7 +420,7 @@ public class KSecondConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Second;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(TimeSpan))
         {
@@ -438,7 +438,7 @@ public class KSecondConverter<T> : KTypeConverter<T>
         throw new InvalidOperationException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(TimeSpan))
         {
@@ -483,7 +483,7 @@ public class KTimeConverter<T> : KTypeConverter<T>
         return t == TypeToConvert && kt == KType.Time;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(TimeSpan))
         {
@@ -501,7 +501,7 @@ public class KTimeConverter<T> : KTypeConverter<T>
         throw new InvalidOperationException();
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (TypeToConvert == typeof(TimeSpan))
         {

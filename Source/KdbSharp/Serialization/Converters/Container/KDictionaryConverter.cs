@@ -23,14 +23,14 @@ public class KDictionaryConverter<T> : KTypeConverter<T> // where T: KSimpleDict
         return t == typeof(T) && kt == KType.Dictionary;
     }
 
-    public override T Read(KReader reader, KSerializerOptions options)
+    public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         if (reader.TypeStamp != KType.Dictionary)
         {
             throw new InvalidOperationException();
         }
-        var keys = KSerializer.Deserialize<object>(reader, options);
-        var values = KSerializer.Deserialize<object>(reader, options);
+        var keys = KSerializer.Deserialize<object>(ref reader, options);
+        var values = KSerializer.Deserialize<object>(ref reader, options);
         if (keys is Array keyArray && values is Array valueArray)
         {
             return (T)(object)new KSimpleDictionary(keyArray, valueArray);
@@ -45,21 +45,21 @@ public class KDictionaryConverter<T> : KTypeConverter<T> // where T: KSimpleDict
         }
     }
 
-    public override void Write(KWriter writer, T value, KSerializerOptions options)
+    public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
         if (value is KSimpleDictionary simpleDict)
         {
-            writer.WriteStartDictionary();
-            KSerializer.Serialize(writer, simpleDict.Keys, options);
-            KSerializer.Serialize(writer, simpleDict.Values, options);
-            writer.WriteEndDictionary();
+            writer.StartWriteDictionary();
+            KSerializer.Serialize(ref writer, simpleDict.Keys, options);
+            KSerializer.Serialize(ref writer, simpleDict.Values, options);
+            writer.EndWriteDictionary();
         }
         else if (value is KKeyedTable keyedTable)
         {
-            writer.WriteStartDictionary();
-            KSerializer.Serialize(writer, keyedTable.Keys, options);
-            KSerializer.Serialize(writer, keyedTable.Values, options);
-            writer.WriteEndDictionary();
+            writer.StartWriteDictionary();
+            KSerializer.Serialize(ref writer, keyedTable.Keys, options);
+            KSerializer.Serialize(ref writer, keyedTable.Values, options);
+            writer.EndWriteDictionary();
         }
         else
         {

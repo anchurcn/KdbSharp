@@ -24,9 +24,9 @@ public abstract class KTypeConverter
 
     public abstract bool CanConvert(Type t, KType kt);
     // Reads
-    public abstract object? ReadAsObject(KReader reader, KSerializerOptions options);
+    public abstract object? ReadAsObject(ref KSerializationReader reader, KSerializerOptions options);
     // Writes
-    public abstract void WriteAsObject(KWriter writer, object? value, KSerializerOptions options);
+    public abstract void WriteAsObject(ref KSerializationWriter writer, object? value, KSerializerOptions options);
 
     // [return: NotNullIfNotNull(nameof(value))]
     internal static T? UnboxOnWrite<T>(object? value)
@@ -45,11 +45,11 @@ public abstract class KTypeConverterFactory : KTypeConverter
 
     public sealed override Type? TypeToConvert => null;
 
-    public sealed override object? ReadAsObject(KReader reader, KSerializerOptions options)
+    public sealed override object? ReadAsObject(ref KSerializationReader reader, KSerializerOptions options)
     {
         throw new InvalidOperationException("We should never get here.");
     }
-    public sealed override void WriteAsObject(KWriter writer, object? value, KSerializerOptions options)
+    public sealed override void WriteAsObject(ref KSerializationWriter writer, object? value, KSerializerOptions options)
     {
         throw new InvalidOperationException("We should never get here.");
     }
@@ -58,15 +58,15 @@ public abstract class KTypeConverterFactory : KTypeConverter
 public abstract class KTypeConverter<T> : KTypeConverter
 {
     public override Type TypeToConvert => typeof(T);
-    public override object? ReadAsObject(KReader reader, KSerializerOptions options)
-        => Read(reader, options);
-    public override void WriteAsObject(KWriter writer, object? value, KSerializerOptions options)
+    public override object? ReadAsObject(ref KSerializationReader reader, KSerializerOptions options)
+        => Read(ref reader, options);
+    public override void WriteAsObject(ref KSerializationWriter writer, object? value, KSerializerOptions options)
     {
-        Write(writer, UnboxOnWrite<T>(value)!, options);
+        Write(ref writer, UnboxOnWrite<T>(value)!, options);
     }
     // abstract members
-    public abstract T Read(KReader reader, KSerializerOptions options);
-    public abstract void Write(KWriter writer, T value, KSerializerOptions options);
+    public abstract T Read(ref KSerializationReader reader, KSerializerOptions options);
+    public abstract void Write(ref KSerializationWriter writer, T value, KSerializerOptions options);
 }
 
 
