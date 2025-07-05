@@ -556,8 +556,36 @@ public struct KSerializationWriter
         EndWriteType();
     }
 
-    // Make it extension method to allow writing strings with specific encoding
-    internal void WriteString(string username, Encoding textEncoding) => throw new NotImplementedException();
-    internal void Write<T>(T value) where T: unmanaged => throw new NotImplementedException();
-    internal void WriteInt32(int value) => throw new NotImplementedException();
+    /// <summary>
+    /// Writes a string using the specified encoding.
+    /// </summary>
+    /// <param name="value">The string value to write.</param>
+    /// <param name="encoding">The encoding to use.</param>
+    internal void WriteString(string value, Encoding encoding)
+    {
+        var bytes = encoding.GetBytes(value);
+        BufferWriteHelper.WriteBytes(_writer, bytes);
+    }
+
+    /// <summary>
+    /// Writes an unmanaged value directly to the buffer.
+    /// </summary>
+    /// <typeparam name="T">The unmanaged type.</typeparam>
+    /// <param name="value">The value to write.</param>
+    internal unsafe void Write<T>(T value) where T : unmanaged
+    {
+        int size = sizeof(T);
+        var span = _writer.GetSpan(size);
+        MemoryMarshal.Write(span, ref value);
+        _writer.Advance(size);
+    }
+
+    /// <summary>
+    /// Writes a 32-bit integer value.
+    /// </summary>
+    /// <param name="value">The integer value to write.</param>
+    internal void WriteInt32(int value)
+    {
+        BufferWriteHelper.WriteInt32(_writer, value);
+    }
 }

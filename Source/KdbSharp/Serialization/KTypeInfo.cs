@@ -12,35 +12,77 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using KdbSharp.Extensions;
 using KdbSharp.Types;
-using System.Diagnostics.CodeAnalysis;
 
 namespace KdbSharp.Serialization;
 
-
+/// <summary>
+/// Base class for type information used in KDB serialization/deserialization.
+/// Manages type converters and provides abstract methods for serialization operations.
+/// </summary>
 public abstract class KTypeInfo
 {
+    /// <summary>
+    /// Gets the object type used for dynamic type handling.
+    /// </summary>
     public static Type ObjectType { get; } = typeof(object);
 
+    /// <summary>
+    /// Gets the serializer options associated with this type info.
+    /// </summary>
     public KSerializerOptions Options { get; }
 
+    /// <summary>
+    /// Gets the dictionary of converters for specific KTypes.
+    /// </summary>
     public Dictionary<KType, KTypeConverter?> Converters { get; } = new();
+
+    /// <summary>
+    /// Gets the lazy-loaded default converter for this type.
+    /// </summary>
     public Lazy<KTypeConverter?> DefaultConverter { get; private set; }
 
+    /// <summary>
+    /// Initializes a new instance of the KTypeInfo class with the specified options.
+    /// </summary>
+    /// <param name="options">The serializer options to use.</param>
     public KTypeInfo(KSerializerOptions options)
     {
         Options = options;
         DefaultConverter = new(() => Options.GetConverter(Type));
     }
-    //public KType KType { get; set; } // TODO: remove
 
+    /// <summary>
+    /// Gets the .NET type that this type info represents.
+    /// </summary>
     public abstract Type Type { get; }
+
+    /// <summary>
+    /// Deserializes an object from the reader without type safety.
+    /// </summary>
+    /// <param name="reader">The serialization reader.</param>
+    /// <returns>The deserialized object.</returns>
     public abstract object? DeserializeAsObject(ref KSerializationReader reader);
+
+    /// <summary>
+    /// Serializes an object to the writer without type safety.
+    /// </summary>
+    /// <param name="writer">The serialization writer.</param>
+    /// <param name="value">The value to serialize.</param>
+    /// <param name="kt">Optional target KType for serialization.</param>
     public abstract void SerializeAsObject(ref KSerializationWriter writer, object? value, KType? kt = null);
 
-    // Resolve from Options if not exists key, then add to cache.
-    // If key exists, but value is null, then return false.
+    /// <summary>
+    /// Tries to get a converter for the specified KType.
+    /// Resolves from Options if not exists in cache, then adds to cache.
+    /// If key exists but value is null, returns false.
+    /// </summary>
+    /// <param name="kt">The KType to get converter for.</param>
+    /// <param name="converter">The converter if found.</param>
+    /// <returns>True if converter was found and is not null.</returns>
     public bool TryGetConverter(KType kt, [NotNullWhen(true)] out KTypeConverter? converter)
     {
         if (Converters.TryGetValue(kt, out converter))
@@ -54,11 +96,33 @@ public abstract class KTypeInfo
             return converter is not null;
         }
     }
+
+    public bool TryGetDefaultKTypeConverter(KType targetType, out KTypeConverter? converter)
+    {
+        if(Converters.TryGetValue(targetType, out converter))
+        {
+            return converter is not null;
+        }
+        else
+        {
+            converter = Options.GetConverter(targetType);
+            Converters.Add(targetType, converter);
+            return converter is not null;
+        }
+    }
+
+    /// <summary>
+    /// Tries to get a typed converter for the specified KType.
+    /// </summary>
+    /// <typeparam name="T">The target type for the converter.</typeparam>
+    /// <param name="t">The KType to get converter for.</param>
+    /// <param name="converter">The typed converter if found.</param>
+    /// <returns>True if converter was found and is of the correct type.</returns>
     public bool TryGetConverter<T>(KType t, [NotNullWhen(true)] out KTypeConverter<T>? converter)
     {
         if (TryGetConverter(t, out var c))
         {
-            converter = c as KTypeConverter<T>;
+            converter = (KTypeConverter<T>)c;
             return converter is not null;
         }
         else
@@ -67,29 +131,54 @@ public abstract class KTypeInfo
             return false;
         }
     }
+
+    /// <summary>
+    /// Tries to get the default converter for this type.
+    /// </summary>
+    /// <param name="converter">The default converter if found.</param>
+    /// <returns>True if default converter exists and is not null.</returns>
     public bool TryGetConverter([NotNullWhen(true)] out KTypeConverter? converter)
     {
         converter = DefaultConverter.Value;
         return converter is not null;
     }
+
+    /// <summary>
+    /// Tries to get the default typed converter for this type.
+    /// </summary>
+    /// <typeparam name="T">The target type for the converter.</typeparam>
+    /// <param name="converter">The typed default converter if found.</param>
+    /// <returns>True if default converter exists and is of the correct type.</returns>
     public bool TryGetConverter<T>([NotNullWhen(true)] out KTypeConverter<T>? converter)
     {
         converter = (KTypeConverter<T>?)DefaultConverter.Value;
         return converter is not null;
     }
 }
-public class KTypeInfo<T> : KTypeInfo
-{
-    public KTypeInfo(KSerializerOptions options) : base(options)
-    {
-    }
 
+/// <summary>
+/// Generic type information for KDB serialization/deserialization of type T.
+/// Provides type-safe serialization operations and converter management.
+/// </summary>
+/// <typeparam name="T">The type this type info represents.</typeparam>
+/// <param name="options">The serializer options to use.</param>
+public class KTypeInfo<T>(KSerializerOptions options) : KTypeInfo(options)
+{
+    /// <summary>
+    /// Gets the .NET type that this type info represents.
+    /// </summary>
     public override Type Type => typeof(T);
 
+    /// <summary>
+    /// Deserializes a value of type T from the reader.
+    /// Handles various KTypes including Unit, Error, and type-specific conversions.
+    /// </summary>
+    /// <param name="reader">The serialization reader.</param>
+    /// <returns>The deserialized value of type T.</returns>
     public virtual T? Deserialize(ref KSerializationReader reader)
     {
         var res = default(T);
-        var kt = reader.BeginReadType();
+        var kt = reader.NextTypeStamp;
 
         // 如果有显式的 Converter，就用它，否则使用默认行为
         // 例如如果请求类型是 Unit，会走显式的 Converter
@@ -99,37 +188,11 @@ public class KTypeInfo<T> : KTypeInfo
         }
         else
         {
-            // 默认行为（宽松模式）：
-            // 如果请求的类型是可空的值类型，可以接受 Unit 作为 null （意味着 Unit 和可视为空的 Atom 会被解释为 null，round trip 可能不对称）
-            // 如果是值类型，但不可空，应该抛出异常
-            if (kt == KType.UnaryPrimitive)
+            if (kt == KType.Error)
             {
-                if (Options.NullHandleStategy == NullHandleStrategy.Default)
-                {
-                    _ = Options.GetConverterByTypeInfo<KUnit>(kt)?.Read(ref reader, Options)
-                        ?? throw new InvalidOperationException("No converter registered for Unit type.");
-                    if (Type.IsValueType)
-                    {
-                        if (Type.IsNullable())
-                        {
-                            res = default;
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException("Cannot read unit (::) to non-nullable value type.");
-                        }
-                    }
-                    else
-                    {
-                        res = default;
-                    }
-                }
-            }
-            else if (kt == KType.Error)
-            {
-                var error = Options.GetConverterByTypeInfo<KdbException>(kt)?.Read(ref reader, Options)
-                    ?? throw new InvalidOperationException("No converter registered for Error type.");
-                throw error;
+                var error = ((KTypeInfo<KdbException>)Options.GetTypeInfoForRootType(typeof(KdbException)))
+                    .Deserialize(ref reader);
+                throw error!;
             }
             else
             {
@@ -137,27 +200,25 @@ public class KTypeInfo<T> : KTypeInfo
             }
         }
 
-        reader.EndReadType();
         return res;
     }
 
-    public override object? DeserializeAsObject(ref KSerializationReader reader)
-    {
-        return Deserialize(ref reader);
-    }
+    /// <summary>
+    /// Deserializes an object from the reader without type safety.
+    /// </summary>
+    /// <param name="reader">The serialization reader.</param>
+    /// <returns>The deserialized object.</returns>
+    public override object? DeserializeAsObject(ref KSerializationReader reader) => Deserialize(ref reader);
 
+    /// <summary>
+    /// Serializes a value of type T to the writer.
+    /// Handles object type delegation, null values, and converter selection.
+    /// </summary>
+    /// <param name="writer">The serialization writer.</param>
+    /// <param name="value">The value to serialize.</param>
+    /// <param name="kType">Optional target KType for serialization.</param>
     public virtual void Serialize(ref KSerializationWriter writer, T? value, KType? kType = null)
     {
-        // Delegate to actual type's type info.
-        if (Type == ObjectType && value is not null)
-        {
-            Options.GetTypeInfoForRootType(value.GetType()).SerializeAsObject(ref writer, value, kType);
-            return;
-        }
-        else if (Type == ObjectType && value is null)
-        {
-            throw new NotImplementedException();
-        }
 
         if (kType is null && TryGetConverter<T>(out var defaultConverter))
         {
@@ -180,24 +241,36 @@ public class KTypeInfo<T> : KTypeInfo
         }
     }
 
-    public override void SerializeAsObject(ref KSerializationWriter writer, object? value, KType? kt = null)
-    {
-        Serialize(ref writer, (T?)value, kt);
-    }
+    /// <summary>
+    /// Serializes an object to the writer without type safety.
+    /// </summary>
+    /// <param name="writer">The serialization writer.</param>
+    /// <param name="value">The value to serialize.</param>
+    /// <param name="kt">Optional target KType for serialization.</param>
+    public override void SerializeAsObject(ref KSerializationWriter writer, object? value, KType? kt = null) => Serialize(ref writer, (T?)value, kt);
 }
 
-public class ObjectTypeInfo : KTypeInfo<object>
+/// <summary>
+/// Type information for dynamic object serialization/deserialization.
+/// Handles runtime type resolution and converter selection based on actual object types.
+/// </summary>
+/// <param name="options">The serializer options to use.</param>
+public class ObjectTypeInfo(KSerializerOptions options) : KTypeInfo<object>(options)
 {
-    public ObjectTypeInfo(KSerializerOptions options):base(options)
-    {
-        
-    }
+    /// <summary>
+    /// Gets the object type (always returns typeof(object)).
+    /// </summary>
     public override Type Type => ObjectType;
 
+    /// <summary>
+    /// Deserializes an object by reading the type stamp and using the appropriate converter.
+    /// </summary>
+    /// <param name="reader">The serialization reader.</param>
+    /// <returns>The deserialized object.</returns>
     public override object? Deserialize(ref KSerializationReader reader)
     {
         var nextTypeStamp = reader.NextTypeStamp;
-        if (TryGetConverter(nextTypeStamp, out var converter))
+        if (TryGetDefaultKTypeConverter(nextTypeStamp, out var converter))
         {
             return converter.ReadAsObject(ref reader, Options);
         }
@@ -207,17 +280,24 @@ public class ObjectTypeInfo : KTypeInfo<object>
         }
     }
 
+    /// <summary>
+    /// Serializes an object by determining its runtime type and using the appropriate converter.
+    /// </summary>
+    /// <param name="writer">The serialization writer.</param>
+    /// <param name="value">The value to serialize.</param>
+    /// <param name="kType">Optional target KType for serialization.</param>
     public override void Serialize(ref KSerializationWriter writer, object? value, KType? kType = null)
     {
         if (kType is null)
         {
             if (value is null)
             {
-                writer.WriteUnaryPrimitive(UnaryPrimitive.Unit);
+                // TODO: Atom.Null for AtomList, Unit for others.
+                throw new NotImplementedException("TODO: write proper null value for writing container type present.");
             }
             else
             {
-                Options.GetTypeInfo(value.GetType()).SerializeAsObject(ref writer, Options);
+                Options.GetTypeInfo(value.GetType()).SerializeAsObject(ref writer, value);
             }
         }
         else
@@ -229,7 +309,7 @@ public class ObjectTypeInfo : KTypeInfo<object>
                 // 这要求 Converter 实现 WriteAsObject，当传入 null 则写入 null 值，
                 // 比如 KIntConverter 写 Kint.Null，BooleanConverter 抛出异常
                 // 其他写 UnaryPrimitive.Unit
-                throw new NotImplementedException();
+                throw new NotImplementedException("TODO: write proper null value for kType.");
             }
             else
             {
