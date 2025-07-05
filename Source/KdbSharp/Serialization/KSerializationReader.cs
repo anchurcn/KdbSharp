@@ -25,8 +25,7 @@ using KdbSharp.Types;
 namespace KdbSharp.Serialization;
 
 /// <summary>
-/// A struct-based reader for KDB data types that replaces the KReader API.
-/// Inspired by MessagePack.MessagePackReader design.
+/// A struct-based reader for KDB data types.
 /// </summary>
 public ref struct KSerializationReader
 {
@@ -48,12 +47,7 @@ public ref struct KSerializationReader
     public Encoding TextEncoding { get; set; }
 
     /// <summary>
-    /// Gets or sets the protocol version.
-    /// </summary>
-    public byte ProtocolVersion { get; set; }
-
-    /// <summary>
-    /// Gets a value indicating whether the system architecture is little-endian.
+    /// Gets or sets a value indicating whether the data being read is little-endian.
     /// </summary>
     public bool IsLittleEndian { get; set; }
 
@@ -91,7 +85,6 @@ public ref struct KSerializationReader
         _reader = new SequenceReader<byte>(memory);
         _stack = new Stack<ReadStackFrame>();
         TextEncoding = Encoding.UTF8;
-        ProtocolVersion = KConstant.ClientProtocolVersion;
         CancellationToken = default;
         IsLittleEndian = false;
     }
@@ -136,6 +129,8 @@ public ref struct KSerializationReader
     /// Gets the current atom type stamp (for atom lists).
     /// </summary>
     public KType? AtomTypeStamp => GetCurrentFrame().AtomTypeStamp;
+
+    #region Static
 
     /// <summary>
     /// Reads a type stamp from the buffer.
@@ -190,6 +185,161 @@ public ref struct KSerializationReader
     }
 
     /// <summary>
+    /// Skips the specified number of bytes in the buffer.
+    /// </summary>
+    /// <param name="count">The number of bytes to skip.</param>
+    public void Skip(int count)
+    {
+        if (count < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count), "Count cannot be negative.");
+        }
+
+        if (count > 0)
+        {
+            _reader.Advance(count);
+        }
+    }
+
+    #endregion
+
+    #region Container read
+
+    /// <summary>
+    /// Starts reading a list. The list type is determined by reading the type stamp.
+    /// Metadata is stored in the current frame.
+    /// </summary>
+    public void StartReadList()
+    {
+        var listType = BeginReadType();
+        var attributes = ReadByte();
+        var length = ReadInt32();
+
+        // Update the stack frame with list information
+        var frame = GetCurrentFrame();
+        frame.Attributes = attributes;
+        frame.ListLength = length;
+        if (listType.IsAtomList())
+            frame.AtomTypeStamp = listType.Neg();
+
+        _stack.Pop();
+        _stack.Push(frame);
+    }
+
+    /// <summary>
+    /// Ends reading a list.
+    /// </summary>
+    public void EndReadList()
+    {
+        EndReadType();
+    }
+
+    /// <summary>
+    /// Starts reading a dictionary.
+    /// </summary>
+    public void StartReadDictionary()
+    {
+        BeginReadType();
+    }
+
+    /// <summary>
+    /// Ends reading a dictionary.
+    /// </summary>
+    public void EndReadDictionary()
+    {
+        EndReadType();
+    }
+
+    /// <summary>
+    /// Starts reading a table.
+    /// Metadata is stored in the current frame.
+    /// </summary>
+    public void StartReadTable()
+    {
+        BeginReadType();
+        var attributes = ReadByte();
+        var dictType = ReadTypeStamp();
+        if (dictType != KType.Dictionary)
+        {
+            throw new InvalidOperationException($"Expected Dictionary type stamp in table, but got {dictType}.");
+        }
+
+        // Update the stack frame with table information
+        var frame = GetCurrentFrame();
+        frame.Attributes = attributes;
+        _stack.Pop();
+        _stack.Push(frame);
+    }
+
+    /// <summary>
+    /// Ends reading a table.
+    /// </summary>
+    public void EndReadTable()
+    {
+        EndReadType();
+    }
+
+    #endregion
+
+    #region Atom read
+
+    /// <summary>
+    /// Reads an unmanaged value from the buffer.
+    /// </summary>
+    /// <typeparam name="T">The type of the unmanaged value.</typeparam>
+    /// <returns>The value read from the buffer.</returns>
+    public unsafe T Read<T>() where T : unmanaged
+    {
+        int size = sizeof(T);
+        Span<byte> buffer = stackalloc byte[size];
+        if (!_reader.TryCopyTo(buffer))
+        {
+            throw new InvalidOperationException($"Cannot read {typeof(T).Name}: not enough bytes in buffer.");
+        }
+        _reader.Advance(size);
+
+        return MemoryMarshal.Read<T>(buffer);
+    }
+
+    /// <summary>
+    /// Reads a 32-bit integer from the buffer.
+    /// </summary>
+    /// <returns>The 32-bit integer value.</returns>
+    public int ReadInt32()
+    {
+        var result = Read<int>();
+        return IsLittleEndian == BitConverter.IsLittleEndian
+            ? result : BinaryPrimitives.ReverseEndianness(result);
+    }
+
+    /// <summary>
+    /// Reads a single-precision floating-point value from the buffer.
+    /// </summary>
+    /// <returns>The single-precision floating-point value.</returns>
+    public float ReadSingle()
+    {
+        if (IsLittleEndian == BitConverter.IsLittleEndian)
+        {
+            return Read<float>();
+        }
+        else
+        {
+            var intValue = Read<int>();
+            var reversedInt = BinaryPrimitives.ReverseEndianness(intValue);
+            return BitConverter.Int32BitsToSingle(reversedInt);
+        }
+    }
+
+    /// <summary>
+    /// Reads a boolean value from the buffer.
+    /// </summary>
+    /// <returns>The boolean value.</returns>
+    public bool ReadBoolean()
+    {
+        return Read<byte>() != 0;
+    }
+
+    /// <summary>
     /// Tries to read a single byte from the buffer.
     /// </summary>
     /// <param name="value">The byte value read.</param>
@@ -218,28 +368,9 @@ public ref struct KSerializationReader
     /// <returns>The 16-bit integer value.</returns>
     public short ReadInt16()
     {
-        Span<byte> buffer = stackalloc byte[2];
-        if (!_reader.TryCopyTo(buffer))
-        {
-            throw new InvalidOperationException("Cannot read Int16: not enough bytes in buffer.");
-        }
-        _reader.Advance(2);
-        return BinaryPrimitives.ReadInt16LittleEndian(buffer);
-    }
-
-    /// <summary>
-    /// Reads a 32-bit integer from the buffer.
-    /// </summary>
-    /// <returns>The 32-bit integer value.</returns>
-    public int ReadInt32()
-    {
-        Span<byte> buffer = stackalloc byte[4];
-        if (!_reader.TryCopyTo(buffer))
-        {
-            throw new InvalidOperationException("Cannot read Int32: not enough bytes in buffer.");
-        }
-        _reader.Advance(4);
-        return BinaryPrimitives.ReadInt32LittleEndian(buffer);
+        var result = Read<short>();
+        return IsLittleEndian == BitConverter.IsLittleEndian
+            ? result : BinaryPrimitives.ReverseEndianness(result);
     }
 
     /// <summary>
@@ -248,28 +379,9 @@ public ref struct KSerializationReader
     /// <returns>The 64-bit integer value.</returns>
     public long ReadInt64()
     {
-        Span<byte> buffer = stackalloc byte[8];
-        if (!_reader.TryCopyTo(buffer))
-        {
-            throw new InvalidOperationException("Cannot read Int64: not enough bytes in buffer.");
-        }
-        _reader.Advance(8);
-        return BinaryPrimitives.ReadInt64LittleEndian(buffer);
-    }
-
-    /// <summary>
-    /// Reads a single-precision floating-point value from the buffer.
-    /// </summary>
-    /// <returns>The single-precision floating-point value.</returns>
-    public float ReadSingle()
-    {
-        Span<byte> buffer = stackalloc byte[4];
-        if (!_reader.TryCopyTo(buffer))
-        {
-            throw new InvalidOperationException("Cannot read Single: not enough bytes in buffer.");
-        }
-        _reader.Advance(4);
-        return BinaryPrimitives.ReadSingleLittleEndian(buffer);
+        var result = Read<long>();
+        return IsLittleEndian == BitConverter.IsLittleEndian
+            ? result : BinaryPrimitives.ReverseEndianness(result);
     }
 
     /// <summary>
@@ -278,135 +390,16 @@ public ref struct KSerializationReader
     /// <returns>The double-precision floating-point value.</returns>
     public double ReadDouble()
     {
-        Span<byte> buffer = stackalloc byte[8];
-        if (!_reader.TryCopyTo(buffer))
+        if (IsLittleEndian == BitConverter.IsLittleEndian)
         {
-            throw new InvalidOperationException("Cannot read Double: not enough bytes in buffer.");
-        }
-        _reader.Advance(8);
-        return BinaryPrimitives.ReadDoubleLittleEndian(buffer);
-    }
-
-    /// <summary>
-    /// Reads an unmanaged value from the buffer.
-    /// </summary>
-    /// <typeparam name="T">The type of the unmanaged value.</typeparam>
-    /// <returns>The value read from the buffer.</returns>
-    public unsafe T Read<T>() where T : unmanaged
-    {
-        int size = sizeof(T);
-        Span<byte> buffer = stackalloc byte[size];
-        if (!_reader.TryCopyTo(buffer))
-        {
-            throw new InvalidOperationException($"Cannot read {typeof(T).Name}: not enough bytes in buffer.");
-        }
-        _reader.Advance(size);
-        return MemoryMarshal.Read<T>(buffer);
-    }
-
-    /// <summary>
-    /// Reads a span of bytes from the buffer.
-    /// </summary>
-    /// <param name="length">The number of bytes to read.</param>
-    /// <returns>The bytes read from the buffer.</returns>
-    public ReadOnlySpan<byte> ReadBytes(int length)
-    {
-        if (length < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(length), "Length cannot be negative.");
-        }
-
-        if (length == 0)
-        {
-            return ReadOnlySpan<byte>.Empty;
-        }
-
-        // For small lengths, use stack allocation
-        if (length <= 1024)
-        {
-            Span<byte> buffer = stackalloc byte[length];
-            if (!_reader.TryCopyTo(buffer))
-            {
-                throw new InvalidOperationException($"Cannot read {length} bytes: not enough bytes in buffer.");
-            }
-            _reader.Advance(length);
-            return buffer.ToArray(); // Convert to array to return from method
+            return Read<double>();
         }
         else
         {
-            // For larger lengths, allocate on heap
-            byte[] buffer = new byte[length];
-            if (!_reader.TryCopyTo(buffer))
-            {
-                throw new InvalidOperationException($"Cannot read {length} bytes: not enough bytes in buffer.");
-            }
-            _reader.Advance(length);
-            return buffer;
+            var longValue = Read<long>();
+            var reversedLong = BinaryPrimitives.ReverseEndianness(longValue);
+            return BitConverter.Int64BitsToDouble(reversedLong);
         }
-    }
-
-    /// <summary>
-    /// Reads a null-terminated string from the buffer using the specified encoding.
-    /// </summary>
-    /// <param name="encoding">The encoding to use.</param>
-    /// <returns>The string read from the buffer.</returns>
-    public string ReadNullTerminatedString(Encoding encoding)
-    {
-        var bytes = GetNullTerminatedBytes();
-        return encoding.GetString(bytes);
-    }
-
-    /// <summary>
-    /// Reads a null-terminated string from the buffer using the default text encoding.
-    /// </summary>
-    /// <returns>The string read from the buffer.</returns>
-    public string ReadNullTerminatedString()
-    {
-        return ReadNullTerminatedString(TextEncoding);
-    }
-
-    /// <summary>
-    /// Reads a string of the specified byte length from the buffer using the specified encoding.
-    /// </summary>
-    /// <param name="byteLength">The number of bytes to read.</param>
-    /// <param name="encoding">The encoding to use.</param>
-    /// <returns>The string read from the buffer.</returns>
-    public string ReadString(int byteLength, Encoding encoding)
-    {
-        var bytes = ReadBytes(byteLength);
-        return encoding.GetString(bytes);
-    }
-
-    /// <summary>
-    /// Reads a string of the specified byte length from the buffer using the default text encoding.
-    /// </summary>
-    /// <param name="byteLength">The number of bytes to read.</param>
-    /// <returns>The string read from the buffer.</returns>
-    public string ReadString(int byteLength)
-    {
-        return ReadString(byteLength, TextEncoding);
-    }
-
-    /// <summary>
-    /// Gets null-terminated bytes from the buffer.
-    /// </summary>
-    /// <returns>The bytes up to the null terminator.</returns>
-    public ReadOnlySpan<byte> GetNullTerminatedBytes()
-    {
-        throw new NotImplementedException();
-    }
-
-    // ReadXXX methods for KDB Atom types
-
-    /// <summary>
-    /// Reads a boolean value.
-    /// </summary>
-    /// <returns>The boolean value.</returns>
-    public bool ReadBoolean()
-    {
-        BeginReadAtom();
-        var value = ReadByte() != 0;
-        return value;
     }
 
     /// <summary>
@@ -591,100 +584,106 @@ public ref struct KSerializationReader
         return value;
     }
 
-    // StartReadXXX and EndReadXXX methods for KDB Collection types
+    #endregion
+
+    #region Other read
+
+    #endregion
+
+    #region Buffer read
 
     /// <summary>
-    /// Starts reading a list. The list type is determined by reading the type stamp.
+    /// Reads a span of bytes from the buffer.
     /// </summary>
-    /// <returns>A tuple containing the list type, attributes and length of the list.</returns>
-    public (KType listType, byte attributes, int length) StartReadList()
+    /// <param name="length">The number of bytes to read.</param>
+    /// <returns>The bytes read from the buffer.</returns>
+    public ReadOnlySpan<byte> ReadBytes(int length)
     {
-        var listType = BeginReadType();
-        var attributes = ReadByte();
-        var length = ReadInt32();
-
-        // Update the stack frame with list information
-        var frame = GetCurrentFrame();
-        frame.Attributes = attributes;
-        frame.ListLength = length;
-        if (listType.IsAtomList())
-            frame.AtomTypeStamp = listType.Neg();
-
-        _stack.Pop();
-        _stack.Push(frame);
-
-        return (listType, attributes, length);
-    }
-
-    /// <summary>
-    /// Ends reading a list.
-    /// </summary>
-    public void EndReadList()
-    {
-        EndReadType();
-    }
-
-    /// <summary>
-    /// Starts reading a dictionary.
-    /// </summary>
-    public void StartReadDictionary()
-    {
-        BeginReadType();
-    }
-
-    /// <summary>
-    /// Ends reading a dictionary.
-    /// </summary>
-    public void EndReadDictionary()
-    {
-        EndReadType();
-    }
-
-    /// <summary>
-    /// Starts reading a table.
-    /// </summary>
-    /// <returns>The attributes of the table.</returns>
-    public byte StartReadTable()
-    {
-        BeginReadType();
-        var attributes = ReadByte();
-        var dictType = ReadTypeStamp();
-        if (dictType != KType.Dictionary)
+        if (length < 0)
         {
-            throw new InvalidOperationException($"Expected Dictionary type stamp in table, but got {dictType}.");
+            throw new ArgumentOutOfRangeException(nameof(length), "Length cannot be negative.");
         }
 
-        // Update the stack frame with table information
-        var frame = GetCurrentFrame();
-        frame.Attributes = attributes;
-        _stack.Pop();
-        _stack.Push(frame);
+        if (length == 0)
+        {
+            return ReadOnlySpan<byte>.Empty;
+        }
 
-        return attributes;
+        // For small lengths, use stack allocation
+        if (length <= 1024)
+        {
+            Span<byte> buffer = stackalloc byte[length];
+            if (!_reader.TryCopyTo(buffer))
+            {
+                throw new InvalidOperationException($"Cannot read {length} bytes: not enough bytes in buffer.");
+            }
+            _reader.Advance(length);
+            return buffer.ToArray(); // Convert to array to return from method
+        }
+        else
+        {
+            // For larger lengths, allocate on heap
+            byte[] buffer = new byte[length];
+            if (!_reader.TryCopyTo(buffer))
+            {
+                throw new InvalidOperationException($"Cannot read {length} bytes: not enough bytes in buffer.");
+            }
+            _reader.Advance(length);
+            return buffer;
+        }
     }
 
     /// <summary>
-    /// Ends reading a table.
+    /// Reads a null-terminated string from the buffer using the specified encoding.
     /// </summary>
-    public void EndReadTable()
+    /// <param name="encoding">The encoding to use.</param>
+    /// <returns>The string read from the buffer.</returns>
+    public string ReadNullTerminatedString(Encoding encoding)
     {
-        EndReadType();
+        var bytes = GetNullTerminatedBytes();
+        return encoding.GetString(bytes);
     }
 
     /// <summary>
-    /// Skips the specified number of bytes in the buffer.
+    /// Reads a null-terminated string from the buffer using the default text encoding.
     /// </summary>
-    /// <param name="count">The number of bytes to skip.</param>
-    public void Skip(int count)
+    /// <returns>The string read from the buffer.</returns>
+    public string ReadNullTerminatedString()
     {
-        if (count < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(count), "Count cannot be negative.");
-        }
-
-        if (count > 0)
-        {
-            _reader.Advance(count);
-        }
+        return ReadNullTerminatedString(TextEncoding);
     }
+
+    /// <summary>
+    /// Reads a string of the specified byte length from the buffer using the specified encoding.
+    /// </summary>
+    /// <param name="byteLength">The number of bytes to read.</param>
+    /// <param name="encoding">The encoding to use.</param>
+    /// <returns>The string read from the buffer.</returns>
+    public string ReadString(int byteLength, Encoding encoding)
+    {
+        var bytes = ReadBytes(byteLength);
+        return encoding.GetString(bytes);
+    }
+
+    /// <summary>
+    /// Reads a string of the specified byte length from the buffer using the default text encoding.
+    /// </summary>
+    /// <param name="byteLength">The number of bytes to read.</param>
+    /// <returns>The string read from the buffer.</returns>
+    public string ReadString(int byteLength)
+    {
+        return ReadString(byteLength, TextEncoding);
+    }
+
+    /// <summary>
+    /// Gets null-terminated bytes from the buffer.
+    /// </summary>
+    /// <returns>The bytes up to the null terminator.</returns>
+    public ReadOnlySpan<byte> GetNullTerminatedBytes()
+    {
+        throw new NotImplementedException();
+    }
+
+    #endregion
+
 }

@@ -123,8 +123,7 @@ public partial class KSerializer
         var info = GetTypeInfo<T>(options);
         var reader = new KSerializationReader(data)
         {
-            TextEncoding = options.TextEncoding,
-            ProtocolVersion = KConstant.ClientProtocolVersion
+            TextEncoding = options.TextEncoding
         };
         return info.Deserialize(ref reader);
     }
@@ -187,8 +186,7 @@ public partial class KSerializer
         var buffer = new ArrayBufferWriter<byte>();
         var writer = new KSerializationWriter(buffer)
         {
-            TextEncoding = options.TextEncoding,
-            ProtocolVersion = KConstant.ClientProtocolVersion
+            TextEncoding = options.TextEncoding
         };
 
         var info = GetTypeInfo<T>(options);
@@ -206,8 +204,7 @@ public partial class KSerializer
         var buffer = new ArrayBufferWriter<byte>();
         var writer = new KSerializationWriter(buffer)
         {
-            TextEncoding = options?.TextEncoding ?? Encoding.UTF8,
-            ProtocolVersion = KConstant.ClientProtocolVersion
+            TextEncoding = options?.TextEncoding ?? Encoding.UTF8
         };
 
         var info = GetTypeInfo<T>(options ?? DefaultOptions);
