@@ -225,15 +225,15 @@ public class KdbConnectionBase
         // The connection will corrupt if any exception is thrown here.
         try
         {
-            var writer = new KSerializationWriter(_bufferWriter);
+            var writer = _bufferWriter;
             // Serialize message header.
-            writer.BufferWriter.Write(message.HeaderMeta);
-            writer.BufferWriter.WriteInt32(message.Size);
+            writer.Write(message.HeaderMeta);
+            writer.WriteInt32(message.Size);
             // Send serialized header and body.
-            await Stream.WriteAsync(_bufferWriter.WrittenMemory, cancellation);
+            await Stream.WriteAsync(writer.WrittenMemory, cancellation);
             await Stream.WriteAsync(message.Body, cancellation);
             await Stream.FlushAsync(cancellation);
-            _bufferWriter.Clear();
+            writer.Clear();
         }
         catch (Exception)
         {
