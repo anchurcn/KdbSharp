@@ -21,7 +21,7 @@ public class EnumToSymbolConverterFactory : KTypeConverterFactory
 {
     public override bool CanConvert(Type t, KType kt) => t.IsEnum && kt == KType.Symbol;
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         // Create via reflection
         var type = typeof(EnumToSymbolConverter<>).MakeGenericType(t);
@@ -30,9 +30,11 @@ public class EnumToSymbolConverterFactory : KTypeConverterFactory
 
     public class EnumToSymbolConverter<T> : KTypeConverter<T> where T : struct, Enum
     {
+        public override KType? TypeToWriteTo => KType.Symbol;
+
         public override bool CanConvert(Type t, KType kt)
         {
-            return t == TypeToConvert && kt == KType.Symbol;
+            return t == TypeToReadBack && kt == KType.Symbol;
         }
 
         public override T Read(ref KSerializationReader reader, KSerializerOptions options)

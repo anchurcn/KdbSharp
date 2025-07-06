@@ -23,9 +23,11 @@ namespace KdbSharp.Serialization.Converters
 {
     public class StringConverter : KTypeConverter<string>
     {
+        public override KType? TypeToWriteTo => KType.CharList;
+
         public override bool CanConvert(Type t, KType kt)
         {
-            return t == TypeToConvert && kt == KType.CharList;
+            return t == TypeToReadBack && kt == KType.CharList;
         }
         public override string Read(ref KSerializationReader reader, KSerializerOptions options)
         {

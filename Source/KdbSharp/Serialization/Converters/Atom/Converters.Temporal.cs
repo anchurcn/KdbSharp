@@ -27,7 +27,7 @@ public class KTimestampeConverterFactory : KTypeConverterFactory
             && (t == typeof(KTimestamp) || t.IsTypeOfOrNullable<DateTime>());
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var converterType = typeof(KTimestampConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(converterType)!;
@@ -36,23 +36,25 @@ public class KTimestampeConverterFactory : KTypeConverterFactory
 
 public class KTimestampConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Timestamp;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Timestamp;
+        return t == TypeToReadBack && kt == KType.Timestamp;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(DateTime))
+        if (TypeToReadBack == typeof(DateTime))
         {
             return (T)(object)reader.ReadTimestamp().ToDateTime();
         }
-        else if (TypeToConvert == typeof(DateTime?))
+        else if (TypeToReadBack == typeof(DateTime?))
         {
             var res = reader.ReadTimestamp();
             return (T)(object)(res.IsNull ? default(DateTime?) : res.ToDateTime())!;
         }
-        else if (TypeToConvert == typeof(KTimestamp))
+        else if (TypeToReadBack == typeof(KTimestamp))
         {
             return (T)(object)reader.ReadTimestamp();
         }
@@ -61,16 +63,16 @@ public class KTimestampConverter<T> : KTypeConverter<T>
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(DateTime))
+        if (TypeToReadBack == typeof(DateTime))
         {
             writer.WriteTimestamp(KTimestamp.FromDateTime(((DateTime)(object)value!)));
         }
-        else if (TypeToConvert == typeof(DateTime?))
+        else if (TypeToReadBack == typeof(DateTime?))
         {
             var v = (DateTime?)(object)value!;
             writer.WriteTimestamp(v.HasValue ? KTimestamp.FromDateTime(v.Value) : KTimestamp.Null);
         }
-        else if (TypeToConvert == typeof(KTimestamp))
+        else if (TypeToReadBack == typeof(KTimestamp))
         {
             writer.WriteTimestamp((KTimestamp)(object)value!);
         }
@@ -90,7 +92,7 @@ public class KMonthConverterFactory : KTypeConverterFactory
             && (t == typeof(KMonth) || t.IsTypeOfOrNullable<DateTime>());
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var converterType = typeof(KMonthConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(converterType)!;
@@ -99,23 +101,25 @@ public class KMonthConverterFactory : KTypeConverterFactory
 
 public class KMonthConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Month;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Month;
+        return t == TypeToReadBack && kt == KType.Month;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(DateTime))
+        if (TypeToReadBack == typeof(DateTime))
         {
             return (T)(object)reader.ReadMonth().ToDateTime();
         }
-        else if (TypeToConvert == typeof(DateTime?))
+        else if (TypeToReadBack == typeof(DateTime?))
         {
             var res = reader.ReadMonth();
             return (T)(object)(res.IsNull ? default(DateTime?) : res.ToDateTime())!;
         }
-        else if (TypeToConvert == typeof(KMonth))
+        else if (TypeToReadBack == typeof(KMonth))
         {
             return (T)(object)reader.ReadMonth();
         }
@@ -124,16 +128,16 @@ public class KMonthConverter<T> : KTypeConverter<T>
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(DateTime))
+        if (TypeToReadBack == typeof(DateTime))
         {
             writer.WriteMonth(KMonth.FromDateTime(((DateTime)(object)value!)));
         }
-        else if (TypeToConvert == typeof(DateTime?))
+        else if (TypeToReadBack == typeof(DateTime?))
         {
             var v = (DateTime?)(object)value!;
             writer.WriteMonth(v.HasValue ? KMonth.FromDateTime(v.Value) : KMonth.Null);
         }
-        else if (TypeToConvert == typeof(KMonth))
+        else if (TypeToReadBack == typeof(KMonth))
         {
             writer.WriteMonth((KMonth)(object)value!);
         }
@@ -153,7 +157,7 @@ public class KDateConverterFactory : KTypeConverterFactory
             && (t == typeof(KDate) || t.IsTypeOfOrNullable<DateTime>());
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var converterType = typeof(KDateConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(converterType)!;
@@ -162,23 +166,25 @@ public class KDateConverterFactory : KTypeConverterFactory
 
 public class KDateConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Date;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Date;
+        return t == TypeToReadBack && kt == KType.Date;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(DateTime))
+        if (TypeToReadBack == typeof(DateTime))
         {
             return (T)(object)reader.ReadDate().ToDateTime();
         }
-        else if (TypeToConvert == typeof(DateTime?))
+        else if (TypeToReadBack == typeof(DateTime?))
         {
             var res = reader.ReadDate();
             return (T)(object)(res.IsNull ? default(DateTime?) : res.ToDateTime())!;
         }
-        else if (TypeToConvert == typeof(KDate))
+        else if (TypeToReadBack == typeof(KDate))
         {
             return (T)(object)reader.ReadDate();
         }
@@ -187,16 +193,16 @@ public class KDateConverter<T> : KTypeConverter<T>
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(DateTime))
+        if (TypeToReadBack == typeof(DateTime))
         {
             writer.WriteDate(KDate.FromDateTime(((DateTime)(object)value!)));
         }
-        else if (TypeToConvert == typeof(DateTime?))
+        else if (TypeToReadBack == typeof(DateTime?))
         {
             var v = (DateTime?)(object)value!;
             writer.WriteDate(v.HasValue ? KDate.FromDateTime(v.Value) : KDate.Null);
         }
-        else if (TypeToConvert == typeof(KDate))
+        else if (TypeToReadBack == typeof(KDate))
         {
             writer.WriteDate((KDate)(object)value!);
         }
@@ -216,7 +222,7 @@ public class KDateTimeConverterFactory : KTypeConverterFactory
             && (t == typeof(KDateTime) || t.IsTypeOfOrNullable<DateTime>());
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var converterType = typeof(KDateTimeConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(converterType)!;
@@ -225,23 +231,25 @@ public class KDateTimeConverterFactory : KTypeConverterFactory
 
 public class KDateTimeConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.DateTime;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.DateTime;
+        return t == TypeToReadBack && kt == KType.DateTime;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(DateTime))
+        if (TypeToReadBack == typeof(DateTime))
         {
             return (T)(object)reader.ReadDateTime().ToDateTime();
         }
-        else if (TypeToConvert == typeof(DateTime?))
+        else if (TypeToReadBack == typeof(DateTime?))
         {
             var res = reader.ReadDateTime();
             return (T)(object)(res.IsNull ? default(DateTime?) : res.ToDateTime())!;
         }
-        else if (TypeToConvert == typeof(KDateTime))
+        else if (TypeToReadBack == typeof(KDateTime))
         {
             return (T)(object)reader.ReadDateTime();
         }
@@ -250,16 +258,16 @@ public class KDateTimeConverter<T> : KTypeConverter<T>
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(DateTime))
+        if (TypeToReadBack == typeof(DateTime))
         {
             writer.WriteDateTime(KDateTime.FromDateTime(((DateTime)(object)value!)));
         }
-        else if (TypeToConvert == typeof(DateTime?))
+        else if (TypeToReadBack == typeof(DateTime?))
         {
             var v = (DateTime?)(object)value!;
             writer.WriteDateTime(v.HasValue ? KDateTime.FromDateTime(v.Value) : KDateTime.Null);
         }
-        else if (TypeToConvert == typeof(KDateTime))
+        else if (TypeToReadBack == typeof(KDateTime))
         {
             writer.WriteDateTime((KDateTime)(object)value!);
         }
@@ -279,7 +287,7 @@ public class KTimeSpanConverterFactory : KTypeConverterFactory
             && (t == typeof(KTimeSpan) || t.IsTypeOfOrNullable<TimeSpan>());
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var converterType = typeof(KTimeSpanConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(converterType)!;
@@ -288,23 +296,25 @@ public class KTimeSpanConverterFactory : KTypeConverterFactory
 
 public class KTimeSpanConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.TimeSpan;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.TimeSpan;
+        return t == TypeToReadBack && kt == KType.TimeSpan;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(TimeSpan))
+        if (TypeToReadBack == typeof(TimeSpan))
         {
             return (T)(object)reader.ReadTimeSpan().ToTimeSpan();
         }
-        else if (TypeToConvert == typeof(TimeSpan?))
+        else if (TypeToReadBack == typeof(TimeSpan?))
         {
             var res = reader.ReadTimeSpan();
             return (T)(object)(res.IsNull ? default(TimeSpan?) : res.ToTimeSpan())!;
         }
-        else if (TypeToConvert == typeof(KTimeSpan))
+        else if (TypeToReadBack == typeof(KTimeSpan))
         {
             return (T)(object)reader.ReadTimeSpan();
         }
@@ -313,16 +323,16 @@ public class KTimeSpanConverter<T> : KTypeConverter<T>
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(TimeSpan))
+        if (TypeToReadBack == typeof(TimeSpan))
         {
             writer.WriteTimeSpan(KTimeSpan.FromTimeSpan(((TimeSpan)(object)value!)));
         }
-        else if (TypeToConvert == typeof(TimeSpan?))
+        else if (TypeToReadBack == typeof(TimeSpan?))
         {
             var v = (TimeSpan?)(object)value!;
             writer.WriteTimeSpan(v.HasValue ? KTimeSpan.FromTimeSpan(v.Value) : KTimeSpan.Null);
         }
-        else if (TypeToConvert == typeof(KTimeSpan))
+        else if (TypeToReadBack == typeof(KTimeSpan))
         {
             writer.WriteTimeSpan((KTimeSpan)(object)value!);
         }
@@ -342,7 +352,7 @@ public class KMinuteConverterFactory : KTypeConverterFactory
             && (t == typeof(KMinute) || t.IsTypeOfOrNullable<KTimeSpan>());
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var converterType = typeof(KMinuteConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(converterType)!;
@@ -351,23 +361,25 @@ public class KMinuteConverterFactory : KTypeConverterFactory
 
 public class KMinuteConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Minute;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Minute;
+        return t == TypeToReadBack && kt == KType.Minute;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(TimeSpan))
+        if (TypeToReadBack == typeof(TimeSpan))
         {
             return (T)(object)reader.ReadMinute().ToTimeSpan();
         }
-        else if (TypeToConvert == typeof(TimeSpan?))
+        else if (TypeToReadBack == typeof(TimeSpan?))
         {
             var res = reader.ReadMinute();
             return (T)(object)(res.IsNull ? default(TimeSpan?) : res.ToTimeSpan())!;
         }
-        else if (TypeToConvert == typeof(KMinute))
+        else if (TypeToReadBack == typeof(KMinute))
         {
             return (T)(object)reader.ReadMinute();
         }
@@ -376,16 +388,16 @@ public class KMinuteConverter<T> : KTypeConverter<T>
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(TimeSpan))
+        if (TypeToReadBack == typeof(TimeSpan))
         {
             writer.WriteMinute(KMinute.FromTimeSpan(((TimeSpan)(object)value!)));
         }
-        else if (TypeToConvert == typeof(TimeSpan?))
+        else if (TypeToReadBack == typeof(TimeSpan?))
         {
             var v = (TimeSpan?)(object)value!;
             writer.WriteMinute(v.HasValue ? KMinute.FromTimeSpan(v.Value) : KMinute.Null);
         }
-        else if (TypeToConvert == typeof(KMinute))
+        else if (TypeToReadBack == typeof(KMinute))
         {
             writer.WriteMinute((KMinute)(object)value!);
         }
@@ -406,7 +418,7 @@ public class KSecondConverterFactory : KTypeConverterFactory
             && (t == typeof(KSecond) || t.IsTypeOfOrNullable<KTimeSpan>());
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var converterType = typeof(KSecondConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(converterType)!;
@@ -415,23 +427,25 @@ public class KSecondConverterFactory : KTypeConverterFactory
 
 public class KSecondConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Second;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Second;
+        return t == TypeToReadBack && kt == KType.Second;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(TimeSpan))
+        if (TypeToReadBack == typeof(TimeSpan))
         {
             return (T)(object)reader.ReadSecond().ToTimeSpan();
         }
-        else if (TypeToConvert == typeof(TimeSpan?))
+        else if (TypeToReadBack == typeof(TimeSpan?))
         {
             var res = reader.ReadSecond();
             return (T)(object)(res.IsNull ? default(TimeSpan?) : res.ToTimeSpan())!;
         }
-        else if (TypeToConvert == typeof(KSecond))
+        else if (TypeToReadBack == typeof(KSecond))
         {
             return (T)(object)reader.ReadSecond();
         }
@@ -440,16 +454,16 @@ public class KSecondConverter<T> : KTypeConverter<T>
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(TimeSpan))
+        if (TypeToReadBack == typeof(TimeSpan))
         {
             writer.WriteSecond(KSecond.FromTimeSpan(((TimeSpan)(object)value!)));
         }
-        else if (TypeToConvert == typeof(TimeSpan?))
+        else if (TypeToReadBack == typeof(TimeSpan?))
         {
             var v = (TimeSpan?)(object)value!;
             writer.WriteSecond(v.HasValue ? KSecond.FromTimeSpan(v.Value) : KSecond.Null);
         }
-        else if (TypeToConvert == typeof(KSecond))
+        else if (TypeToReadBack == typeof(KSecond))
         {
             writer.WriteSecond((KSecond)(object)value!);
         }
@@ -469,7 +483,7 @@ public class KTimeConverterFactory : KTypeConverterFactory
             && (t == typeof(KTime) || t.IsTypeOfOrNullable<KTimeSpan>());
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var converterType = typeof(KTimeConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(converterType)!;
@@ -478,23 +492,25 @@ public class KTimeConverterFactory : KTypeConverterFactory
 
 public class KTimeConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Time;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Time;
+        return t == TypeToReadBack && kt == KType.Time;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(TimeSpan))
+        if (TypeToReadBack == typeof(TimeSpan))
         {
             return (T)(object)reader.ReadTime().ToTimeSpan();
         }
-        else if (TypeToConvert == typeof(TimeSpan?))
+        else if (TypeToReadBack == typeof(TimeSpan?))
         {
             var res = reader.ReadTime();
             return (T)(object)(res.IsNull ? default(TimeSpan?) : res.ToTimeSpan())!;
         }
-        else if (TypeToConvert == typeof(KTime))
+        else if (TypeToReadBack == typeof(KTime))
         {
             return (T)(object)reader.ReadTime();
         }
@@ -503,16 +519,16 @@ public class KTimeConverter<T> : KTypeConverter<T>
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(TimeSpan))
+        if (TypeToReadBack == typeof(TimeSpan))
         {
             writer.WriteTime(KTime.FromTimeSpan(((TimeSpan)(object)value!)));
         }
-        else if (TypeToConvert == typeof(TimeSpan?))
+        else if (TypeToReadBack == typeof(TimeSpan?))
         {
             var v = (TimeSpan?)(object)value!;
             writer.WriteTime(v.HasValue ? KTime.FromTimeSpan(v.Value) : KTime.Null);
         }
-        else if (TypeToConvert == typeof(KTime))
+        else if (TypeToReadBack == typeof(KTime))
         {
             writer.WriteTime((KTime)(object)value!);
         }

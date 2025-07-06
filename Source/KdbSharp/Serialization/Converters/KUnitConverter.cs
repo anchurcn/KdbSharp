@@ -18,9 +18,11 @@ namespace KdbSharp.Serialization.Converters;
 
 public class KUnitConverter : KTypeConverter<KUnit>
 {
+    public override KType? TypeToWriteTo => KType.UnaryPrimitive;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return kt == KType.UnaryPrimitive && t == TypeToConvert;
+        return kt == KType.UnaryPrimitive && t == TypeToReadBack;
     }
 
     public override KUnit Read(ref KSerializationReader reader, KSerializerOptions options)

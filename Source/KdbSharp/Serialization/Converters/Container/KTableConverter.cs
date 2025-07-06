@@ -18,6 +18,8 @@ namespace KdbSharp.Serialization.Converters;
 
 public class KTableConverter : KTypeConverter<KTable>
 {
+    public override KType? TypeToWriteTo => KType.Table;
+
     public override bool CanConvert(Type t, KType kt)
     {
         return t == typeof(KTable) && kt == KType.Table;

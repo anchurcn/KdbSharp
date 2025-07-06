@@ -20,9 +20,11 @@ namespace KdbSharp.Serialization.Converters;
 // TODO: Add more tuple types.
 public class ValueTupleConverter<T> : KTypeConverter<T> where T : ITuple
 {
+    public override KType? TypeToWriteTo => KType.GeneralList;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.GeneralList;
+        return t == TypeToReadBack && kt == KType.GeneralList;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
@@ -63,7 +65,7 @@ public class ValueTupleConverterFactory : KTypeConverterFactory
         return t.Name.StartsWith("ValueTuple`") && kt == KType.GeneralList;
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         var type = typeof(ValueTupleConverter<>).MakeGenericType(t);
         return (KTypeConverter)Activator.CreateInstance(type)!;

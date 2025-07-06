@@ -21,9 +21,11 @@ namespace KdbSharp.Serialization.Converters;
 // KBooleanConverter
 public class KBooleanConverter : KTypeConverter<bool>
 {
+    public override KType? TypeToWriteTo => KType.Boolean;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Boolean;
+        return t == TypeToReadBack && kt == KType.Boolean;
     }
     public override bool Read(ref KSerializationReader reader, KSerializerOptions options)
     {
@@ -38,9 +40,11 @@ public class KBooleanConverter : KTypeConverter<bool>
 // KGuidConverter
 public class KGuidConverter : KTypeConverter<Guid>
 {
+    public override KType? TypeToWriteTo => KType.Guid;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Guid;
+        return t == TypeToReadBack && kt == KType.Guid;
     }
     public override Guid Read(ref KSerializationReader reader, KSerializerOptions options)
     {
@@ -55,9 +59,11 @@ public class KGuidConverter : KTypeConverter<Guid>
 // KByteConverter
 public class KByteConverter : KTypeConverter<byte>
 {
+    public override KType? TypeToWriteTo => KType.Byte;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Byte;
+        return t == TypeToReadBack && kt == KType.Byte;
     }
     public override byte Read(ref KSerializationReader reader, KSerializerOptions options)
     {
@@ -78,7 +84,7 @@ public class KCharConverterFactory : KTypeConverterFactory
             && (t == typeof(char) || t == typeof(KChar));
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         if (t == typeof(char))
         {
@@ -94,17 +100,19 @@ public class KCharConverterFactory : KTypeConverterFactory
 
 public class KCharConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Char;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Char;
+        return t == TypeToReadBack && kt == KType.Char;
     }
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(char))
+        if (TypeToReadBack == typeof(char))
         {
             return (T)(object)(char)reader.ReadChar().Value;
         }
-        else if (TypeToConvert == typeof(KChar))
+        else if (TypeToReadBack == typeof(KChar))
         {
             return (T)(object)reader.ReadChar();
         }
@@ -112,7 +120,7 @@ public class KCharConverter<T> : KTypeConverter<T>
     }
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
     {
-        if (TypeToConvert == typeof(char))
+        if (TypeToReadBack == typeof(char))
         {
             if ((char)(object)value! > 255)
             {
@@ -120,7 +128,7 @@ public class KCharConverter<T> : KTypeConverter<T>
             }
             writer.WriteChar(new KChar((sbyte)(object)value!));
         }
-        else if (TypeToConvert == typeof(KChar))
+        else if (TypeToReadBack == typeof(KChar))
         {
             writer.WriteChar((KChar)(object)value!);
         }
@@ -134,9 +142,11 @@ public class KCharConverter<T> : KTypeConverter<T>
 // KSymbolConverter
 public class KSymbolConverter : KTypeConverter<string>
 {
+    public override KType? TypeToWriteTo => KType.Symbol;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Symbol;
+        return t == TypeToReadBack && kt == KType.Symbol;
     }
 
     public override string Read(ref KSerializationReader reader, KSerializerOptions options)

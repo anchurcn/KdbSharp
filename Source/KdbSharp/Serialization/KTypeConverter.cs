@@ -20,7 +20,8 @@ namespace KdbSharp.Serialization;
 
 public abstract class KTypeConverter
 {
-    public abstract Type? TypeToConvert { get; }
+    public abstract Type? TypeToReadBack { get; }
+    public abstract KType? TypeToWriteTo { get; }
 
     public abstract bool CanConvert(Type t, KType kt);
     // Reads
@@ -41,9 +42,10 @@ public abstract class KTypeConverter
 
 public abstract class KTypeConverterFactory : KTypeConverter
 {
-    public abstract KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options);
+    public abstract KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options);
 
-    public sealed override Type? TypeToConvert => null;
+    public sealed override Type? TypeToReadBack => null;
+    public sealed override KType? TypeToWriteTo => null;
 
     public sealed override object? ReadAsObject(ref KSerializationReader reader, KSerializerOptions options)
     {
@@ -57,7 +59,8 @@ public abstract class KTypeConverterFactory : KTypeConverter
 
 public abstract class KTypeConverter<T> : KTypeConverter
 {
-    public override Type TypeToConvert => typeof(T);
+    public override Type TypeToReadBack => typeof(T);
+    public abstract override KType? TypeToWriteTo { get; }
     public override object? ReadAsObject(ref KSerializationReader reader, KSerializerOptions options)
         => Read(ref reader, options);
     public override void WriteAsObject(ref KSerializationWriter writer, object? value, KSerializerOptions options)

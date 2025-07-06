@@ -35,7 +35,7 @@ public class KRealConverterFactory : KTypeConverterFactory
         return false;
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         return (KTypeConverter)(Activator.CreateInstance(typeof(KRealConverter<>).MakeGenericType(t))
                        ?? throw new InvalidOperationException($"Failed to create converter for {t}"));
@@ -44,20 +44,22 @@ public class KRealConverterFactory : KTypeConverterFactory
 
 public class KRealConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Real;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Real;
+        return t == TypeToReadBack && kt == KType.Real;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadReal();
         var value = rawValue.Value;
-        if (TypeToConvert == typeof(KReal))
+        if (TypeToReadBack == typeof(KReal))
         {
             return (T)(object)rawValue;
         }
-        else if (TypeToConvert.TryGetNullableUnderlying(out var ut) && ut.IsFloatingPoint())
+        else if (TypeToReadBack.TryGetNullableUnderlying(out var ut) && ut.IsFloatingPoint())
         {
             if (rawValue.IsNull)
             {
@@ -68,7 +70,7 @@ public class KRealConverter<T> : KTypeConverter<T>
                 return ConverterHelper.ConvertToNullableFloatingPoint<float, T>(value)!;
             }
         }
-        else if (TypeToConvert.IsFloatingPoint())
+        else if (TypeToReadBack.IsFloatingPoint())
         {
             return (T)(object)ConverterHelper.ConvertFloatingPoint<float, T>(value)!;
         }
@@ -88,7 +90,7 @@ public class KRealConverter<T> : KTypeConverter<T>
         {
             writer.WriteReal(new KReal(f));
         }
-        else if (TypeToConvert == typeof(float?))
+        else if (TypeToReadBack == typeof(float?))
         {
             if (value is null)
             {
@@ -125,7 +127,7 @@ public class KFloatConverterFactory : KTypeConverterFactory
         return false;
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         return (KTypeConverter)(Activator.CreateInstance(typeof(KFloatConverter<>).MakeGenericType(t))
                                   ?? throw new InvalidOperationException($"Failed to create converter for {t}"));
@@ -134,20 +136,22 @@ public class KFloatConverterFactory : KTypeConverterFactory
 
 public class KFloatConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Float;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Float;
+        return t == TypeToReadBack && kt == KType.Float;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadFloat();
         var value = rawValue.Value;
-        if (TypeToConvert == typeof(KFloat))
+        if (TypeToReadBack == typeof(KFloat))
         {
             return (T)(object)rawValue;
         }
-        else if (TypeToConvert.TryGetNullableUnderlying(out var ut) && ut.IsFloatingPoint())
+        else if (TypeToReadBack.TryGetNullableUnderlying(out var ut) && ut.IsFloatingPoint())
         {
             if (rawValue.IsNull)
             {
@@ -158,7 +162,7 @@ public class KFloatConverter<T> : KTypeConverter<T>
                 return ConverterHelper.ConvertToNullableFloatingPoint<double, T>(value)!;
             }
         }
-        else if (TypeToConvert.IsFloatingPoint())
+        else if (TypeToReadBack.IsFloatingPoint())
         {
             return (T)(object)ConverterHelper.ConvertFloatingPoint<double, T>(value)!;
         }
@@ -178,7 +182,7 @@ public class KFloatConverter<T> : KTypeConverter<T>
         {
             writer.WriteFloat(new KFloat(d));
         }
-        else if (TypeToConvert == typeof(double?))
+        else if (TypeToReadBack == typeof(double?))
         {
             if (value is null)
             {
@@ -217,7 +221,7 @@ public class KShortConverterFactory : KTypeConverterFactory
         return false;
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         return (KTypeConverter)(Activator.CreateInstance(typeof(KShortConverter<>).MakeGenericType(t))
                        ?? throw new InvalidOperationException($"Failed to create converter for {t}"));
@@ -226,20 +230,22 @@ public class KShortConverterFactory : KTypeConverterFactory
 
 public class KShortConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Short;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Short;
+        return t == TypeToReadBack && kt == KType.Short;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadShort();
         var value = rawValue.Value;
-        if (TypeToConvert == typeof(KShort))
+        if (TypeToReadBack == typeof(KShort))
         {
             return (T)(object)rawValue;
         }
-        else if (TypeToConvert.TryGetNullableUnderlying(out var ut) && ut.IsInteger())
+        else if (TypeToReadBack.TryGetNullableUnderlying(out var ut) && ut.IsInteger())
         {
             if (rawValue.IsNull)
             {
@@ -250,7 +256,7 @@ public class KShortConverter<T> : KTypeConverter<T>
                 return ConverterHelper.ConvertToNullableInteger<short, T>(value)!;
             }
         }
-        else if (TypeToConvert.IsInteger())
+        else if (TypeToReadBack.IsInteger())
         {
             return (T)(object)ConverterHelper.ConvertInteger<short, T>(value)!;
         }
@@ -268,7 +274,7 @@ public class KShortConverter<T> : KTypeConverter<T>
         {
             writer.WriteShort(new KShort(s));
         }
-        else if (TypeToConvert == typeof(short?))
+        else if (TypeToReadBack == typeof(short?))
         {
             if (value is null)
             {
@@ -305,7 +311,7 @@ public class KIntConverterFactory : KTypeConverterFactory
         return false;
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         return (KTypeConverter)(Activator.CreateInstance(typeof(KIntConverter<>).MakeGenericType(t))
                                   ?? throw new InvalidOperationException($"Failed to create converter for {t}"));
@@ -314,20 +320,22 @@ public class KIntConverterFactory : KTypeConverterFactory
 
 public class KIntConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Int;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Int;
+        return t == TypeToReadBack && kt == KType.Int;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadInt();
         var value = rawValue.Value;
-        if (TypeToConvert == typeof(KInt))
+        if (TypeToReadBack == typeof(KInt))
         {
             return (T)(object)rawValue;
         }
-        else if (TypeToConvert.TryGetNullableUnderlying(out var ut) && ut.IsInteger())
+        else if (TypeToReadBack.TryGetNullableUnderlying(out var ut) && ut.IsInteger())
         {
             if (rawValue.IsNull)
             {
@@ -338,7 +346,7 @@ public class KIntConverter<T> : KTypeConverter<T>
                 return ConverterHelper.ConvertToNullableInteger<int, T>(value)!;
             }
         }
-        else if (TypeToConvert.IsInteger())
+        else if (TypeToReadBack.IsInteger())
         {
             return (T)(object)ConverterHelper.ConvertInteger<int, T>(value)!;
         }
@@ -356,7 +364,7 @@ public class KIntConverter<T> : KTypeConverter<T>
         {
             writer.WriteInt(new KInt(i));
         }
-        else if (TypeToConvert == typeof(int?))
+        else if (TypeToReadBack == typeof(int?))
         {
             if (value is null)
             {
@@ -394,7 +402,7 @@ public class KLongConverterFactory : KTypeConverterFactory
         return false;
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         return (KTypeConverter)(Activator.CreateInstance(typeof(KLongConverter<>).MakeGenericType(t))
                                              ?? throw new InvalidOperationException($"Failed to create converter for {t}"));
@@ -403,20 +411,22 @@ public class KLongConverterFactory : KTypeConverterFactory
 
 public class KLongConverter<T> : KTypeConverter<T>
 {
+    public override KType? TypeToWriteTo => KType.Long;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return t == TypeToConvert && kt == KType.Long;
+        return t == TypeToReadBack && kt == KType.Long;
     }
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
         var rawValue = reader.ReadLong();
         var value = rawValue.Value;
-        if (TypeToConvert == typeof(KLong))
+        if (TypeToReadBack == typeof(KLong))
         {
             return (T)(object)rawValue;
         }
-        else if (TypeToConvert.TryGetNullableUnderlying(out var ut) && ut.IsInteger())
+        else if (TypeToReadBack.TryGetNullableUnderlying(out var ut) && ut.IsInteger())
         {
             if (rawValue.IsNull)
             {
@@ -427,7 +437,7 @@ public class KLongConverter<T> : KTypeConverter<T>
                 return ConverterHelper.ConvertToNullableInteger<long, T>(value)!;
             }
         }
-        else if (TypeToConvert.IsInteger())
+        else if (TypeToReadBack.IsInteger())
         {
             return (T)(object)ConverterHelper.ConvertInteger<long, T>(value)!;
         }
@@ -445,7 +455,7 @@ public class KLongConverter<T> : KTypeConverter<T>
         {
             writer.WriteLong(new KLong(l));
         }
-        else if (TypeToConvert == typeof(long?))
+        else if (TypeToReadBack == typeof(long?))
         {
             if (value is null)
             {

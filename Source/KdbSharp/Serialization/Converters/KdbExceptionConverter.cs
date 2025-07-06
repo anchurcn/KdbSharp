@@ -18,9 +18,11 @@ namespace KdbSharp.Serialization.Converters;
 
 public class KdbExceptionConverter : KTypeConverter<KdbException>
 {
+    public override KType? TypeToWriteTo => KType.Error;
+
     public override bool CanConvert(Type t, KType kt)
     {
-        return kt == KType.Error && t == TypeToConvert;
+        return kt == KType.Error && t == TypeToReadBack;
     }
 
     public override KdbException Read(ref KSerializationReader reader, KSerializerOptions options)

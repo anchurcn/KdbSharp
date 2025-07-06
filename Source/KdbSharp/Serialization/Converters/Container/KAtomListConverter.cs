@@ -45,13 +45,13 @@ public class KAtomListConverterFactory : KTypeConverterFactory
         return false;
     }
 
-    public override KTypeConverter GetConverter(Type t, KType kt, KSerializerOptions options)
+    public override KTypeConverter GetConverter(Type t, KType? kt, KSerializerOptions options)
     {
         // Create KArrayConverter
         if (t.IsArray)
         {
             var et = t.GetElementType()!;
-            var elemConverter = options.GetConverter(et, kt.GetUnderlyingType());
+            var elemConverter = options.GetConverter(et, kt!.Value.GetUnderlyingType());
             return (KTypeConverter)Activator.CreateInstance(typeof(KArrayConverter<>).MakeGenericType(et), kt, elemConverter)!;
         }
         else
@@ -65,6 +65,9 @@ public class KArrayConverter<TElem> : KTypeConverter<TElem[]>
 {
     private readonly KType _kt;
     private readonly KTypeConverter<TElem>? _elemConverter = null;
+
+    public override KType? TypeToWriteTo => _kt;
+
     public KArrayConverter(KType kt, KTypeConverter<TElem>? elemConverter)
     {
         _kt = kt;
@@ -118,6 +121,9 @@ public class KAtomListConverter<TElem,T> : KTypeConverter<T>
 {
     private readonly KType _kt;
     private readonly KTypeConverter<TElem>? _elemConverter = null;
+
+    public override KType? TypeToWriteTo => _kt;
+
     public KAtomListConverter(KType kt, KTypeConverter<TElem>? elemConverter)
     {
         _kt = kt;

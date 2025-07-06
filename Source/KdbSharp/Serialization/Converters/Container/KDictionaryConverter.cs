@@ -18,6 +18,8 @@ namespace KdbSharp.Serialization.Converters;
 
 public class KDictionaryConverter<T> : KTypeConverter<T> // where T: KSimpleDictionary or KKeyedTable
 {
+    public override KType? TypeToWriteTo => KType.Dictionary;
+
     public override bool CanConvert(Type t, KType kt)
     {
         return t == typeof(T) && kt == KType.Dictionary;

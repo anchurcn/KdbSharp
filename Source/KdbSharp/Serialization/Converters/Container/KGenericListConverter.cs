@@ -23,6 +23,8 @@ namespace KdbSharp.Serialization.Converters
 {
     public class KGenericListConverter : KTypeConverter<object[]>
     {
+        public override KType? TypeToWriteTo => KType.GeneralList;
+
         public override bool CanConvert(Type t, KType kt)
         {
             return kt == KType.GeneralList && t == typeof(object[]);
