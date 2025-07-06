@@ -161,9 +161,15 @@ public abstract class KTypeInfo
 /// Provides type-safe serialization operations and converter management.
 /// </summary>
 /// <typeparam name="T">The type this type info represents.</typeparam>
-/// <param name="options">The serializer options to use.</param>
-public class KTypeInfo<T>(KSerializerOptions options) : KTypeInfo(options)
+public class KTypeInfo<T> : KTypeInfo
 {
+    /// <summary>
+    /// Initializes a new instance of the KTypeInfo&lt;T&gt; class.
+    /// </summary>
+    /// <param name="options">The serializer options to use.</param>
+    public KTypeInfo(KSerializerOptions options) : base(options)
+    {
+    }
     /// <summary>
     /// Gets the .NET type that this type info represents.
     /// </summary>
@@ -254,9 +260,15 @@ public class KTypeInfo<T>(KSerializerOptions options) : KTypeInfo(options)
 /// Type information for dynamic object serialization/deserialization.
 /// Handles runtime type resolution and converter selection based on actual object types.
 /// </summary>
-/// <param name="options">The serializer options to use.</param>
-public class ObjectTypeInfo(KSerializerOptions options) : KTypeInfo<object>(options)
+public class ObjectTypeInfo : KTypeInfo<object>
 {
+    /// <summary>
+    /// Initializes a new instance of the ObjectTypeInfo class.
+    /// </summary>
+    /// <param name="options">The serializer options to use.</param>
+    public ObjectTypeInfo(KSerializerOptions options) : base(options)
+    {
+    }
     /// <summary>
     /// Gets the object type (always returns typeof(object)).
     /// </summary>

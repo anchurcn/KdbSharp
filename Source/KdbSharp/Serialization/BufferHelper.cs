@@ -13,12 +13,9 @@
  limitations under the License.
 */
 using System;
-using System.Buffers.Binary;
-using System.Collections.Generic;
-using System.Linq;
+using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace KdbSharp.Serialization
 {
@@ -46,6 +43,103 @@ namespace KdbSharp.Serialization
 
         public static ReadOnlySpan<TTo> Cast<TFrom, TTo>(this ReadOnlySpan<TFrom> span) where TFrom : struct where TTo : struct
             => MemoryMarshal.Cast<TFrom, TTo>(span);
+    }
+
+    /// <summary>
+    /// Extension methods for IBufferWriter&lt;byte&gt; to write binary data.
+    /// </summary>
+    public static class BufferWriterExtensions
+    {
+        public static void WriteByte(this IBufferWriter<byte> writer, byte value)
+        {
+            var span = writer.GetSpan(1);
+            span[0] = value;
+            writer.Advance(1);
+        }
+
+        public static void WriteBytes(this IBufferWriter<byte> writer, ReadOnlySpan<byte> bytes)
+        {
+            var span = writer.GetSpan(bytes.Length);
+            bytes.CopyTo(span);
+            writer.Advance(bytes.Length);
+        }
+
+        public static void WriteBool(this IBufferWriter<byte> writer, bool value)
+        {
+            writer.WriteByte(value ? (byte)1 : (byte)0);
+        }
+
+        public static void WriteInt16(this IBufferWriter<byte> writer, short value)
+        {
+            var span = writer.GetSpan(2);
+            MemoryMarshal.Write(span, ref value);
+            writer.Advance(2);
+        }
+
+        public static void WriteInt32(this IBufferWriter<byte> writer, int value)
+        {
+            var span = writer.GetSpan(4);
+            MemoryMarshal.Write(span, ref value);
+            writer.Advance(4);
+        }
+
+        public static void WriteInt64(this IBufferWriter<byte> writer, long value)
+        {
+            var span = writer.GetSpan(8);
+            MemoryMarshal.Write(span, ref value);
+            writer.Advance(8);
+        }
+
+        public static void WriteSingle(this IBufferWriter<byte> writer, float value)
+        {
+            var span = writer.GetSpan(4);
+            MemoryMarshal.Write(span, ref value);
+            writer.Advance(4);
+        }
+
+        public static void WriteDouble(this IBufferWriter<byte> writer, double value)
+        {
+            var span = writer.GetSpan(8);
+            MemoryMarshal.Write(span, ref value);
+            writer.Advance(8);
+        }
+
+        /// <summary>
+        /// Writes a string using the specified encoding.
+        /// </summary>
+        /// <param name="writer">The buffer writer.</param>
+        /// <param name="value">The string value to write.</param>
+        /// <param name="encoding">The encoding to use.</param>
+        /// <returns>The number of bytes written.</returns>
+        public static int WriteString(this IBufferWriter<byte> writer, ReadOnlySpan<char> value, Encoding encoding)
+        {
+            var byteCount = encoding.GetMaxByteCount(value.Length);
+            var span = writer.GetSpan(byteCount + 1);
+            var written = encoding.GetBytes(value, span);
+            writer.Advance(written);
+            return written;
+        }
+
+        public static int WriteNullTerminatedString(this IBufferWriter<byte> writer, ReadOnlySpan<char> value, Encoding encoding)
+        {
+            var bytesWritten = writer.WriteString(value, encoding);
+            writer.WriteByte(0);
+            return bytesWritten + 1;
+        }
+
+        /// <summary>
+        /// Writes an unmanaged value directly to the buffer.
+        /// </summary>
+        /// <typeparam name="T">The unmanaged type.</typeparam>
+        /// <param name="writer">The buffer writer.</param>
+        /// <param name="value">The value to write.</param>
+        public static unsafe void Write<T>(this IBufferWriter<byte> writer, T value) where T : unmanaged
+        {
+            int size = sizeof(T);
+            var span = writer.GetSpan(size);
+            MemoryMarshal.Write(span, ref value);
+            writer.Advance(size);
+        }
     }
 
     public static class SerializationHelper

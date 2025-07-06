@@ -132,7 +132,6 @@ public partial class KSerializer
 
         var info = GetTypeInfo<T>(options);
         info.Serialize(ref writer, value, targetType);
-        writer.Flush();
 
         return buffer.WrittenSpan.ToArray();
     }
@@ -153,7 +152,6 @@ public partial class KSerializer
 
         var info = GetTypeInfo<T>(options);
         info.Serialize(ref writer, value);
-        writer.Flush();
 
         output.Write(buffer.WrittenSpan);
     }
