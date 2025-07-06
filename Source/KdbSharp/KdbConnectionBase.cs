@@ -144,8 +144,7 @@ public class KdbConnectionBase
 
         // 2. setup tcp connection
         await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var bufferWriter = _bufferWriter;
-        var writer = new KSerializationWriter(bufferWriter);
+        var writer = _bufferWriter;
         // 4. protocol handshake
         writeCredential();
         writer.WriteByte(KConstant.ClientProtocolVersion); // The client's capability (maximum supported protocol version).
@@ -173,19 +172,19 @@ public class KdbConnectionBase
         {
             if (Options.Username is not null)
             {
-                writer.BufferWriter.WriteString(Options.Username, TextEncoding);
+                writer.WriteString(Options.Username, TextEncoding);
             }
             if (Options.Password is not null)
             {
-                writer.BufferWriter.WriteString(":", TextEncoding);
-                writer.BufferWriter.WriteString(Options.Password, TextEncoding);
+                writer.WriteString(":", TextEncoding);
+                writer.WriteString(Options.Password, TextEncoding);
             }
         }
         async ValueTask flushAndClearBufferAsync()
         {
-            await Stream.WriteAsync(bufferWriter.WrittenMemory, cancellationToken);
+            await Stream.WriteAsync(writer.WrittenMemory, cancellationToken);
             await Stream.FlushAsync(cancellationToken);
-            bufferWriter.Clear();
+            writer.Clear();
         }
     }
 

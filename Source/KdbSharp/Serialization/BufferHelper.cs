@@ -113,8 +113,8 @@ namespace KdbSharp.Serialization
         /// <returns>The number of bytes written.</returns>
         public static int WriteString(this IBufferWriter<byte> writer, ReadOnlySpan<char> value, Encoding encoding)
         {
-            var byteCount = encoding.GetMaxByteCount(value.Length);
-            var span = writer.GetSpan(byteCount + 1);
+            var sizeHint = encoding.GetMaxByteCount(value.Length);
+            var span = writer.GetSpan(sizeHint);
             var written = encoding.GetBytes(value, span);
             writer.Advance(written);
             return written;
