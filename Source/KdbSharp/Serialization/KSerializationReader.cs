@@ -94,7 +94,16 @@ public ref struct KSerializationReader
         return _stack.Count > 0 ? _stack.Peek() :
             throw new InvalidOperationException("No type is being read.");
     }
-
+    private bool IsReadingType(out ReadStackFrame frame)
+    {
+        if (_stack.Count > 0)
+        {
+            frame = _stack.Peek();
+            return true;
+        }
+        frame = default;
+        return false;
+    }
     /// <summary>
     /// Gets the next type stamp that will be read without consuming it.
     /// </summary>
@@ -212,7 +221,7 @@ public ref struct KSerializationReader
     public void StartReadList()
     {
         var listType = BeginReadType();
-        var attributes = ReadByte();
+        var attributes = _reader.ReadByte();
         var length = ReadInt32();
 
         // Update the stack frame with list information
@@ -257,7 +266,7 @@ public ref struct KSerializationReader
     public void StartReadTable()
     {
         BeginReadType();
-        var attributes = ReadByte();
+        var attributes = _reader.ReadByte();
         var dictType = ReadTypeStamp();
         if (dictType != KType.Dictionary)
         {
@@ -331,38 +340,6 @@ public ref struct KSerializationReader
     }
 
     /// <summary>
-    /// Reads a boolean value from the buffer.
-    /// </summary>
-    /// <returns>The boolean value.</returns>
-    public bool ReadBoolean()
-    {
-        return Read<byte>() != 0;
-    }
-
-    /// <summary>
-    /// Tries to read a single byte from the buffer.
-    /// </summary>
-    /// <param name="value">The byte value read.</param>
-    /// <returns>True if successful, false if end of buffer.</returns>
-    public bool TryReadByte(out byte value)
-    {
-        return _reader.TryRead(out value);
-    }
-
-    /// <summary>
-    /// Reads a single byte from the buffer.
-    /// </summary>
-    /// <returns>The byte value.</returns>
-    public byte ReadByte()
-    {
-        if (!TryReadByte(out byte value))
-        {
-            throw new InvalidOperationException("Cannot read byte: end of buffer reached.");
-        }
-        return value;
-    }
-
-    /// <summary>
     /// Reads a 16-bit integer from the buffer.
     /// </summary>
     /// <returns>The 16-bit integer value.</returns>
@@ -400,6 +377,19 @@ public ref struct KSerializationReader
             var reversedLong = BinaryPrimitives.ReverseEndianness(longValue);
             return BitConverter.Int64BitsToDouble(reversedLong);
         }
+    }
+
+    public bool ReadBoolean()
+    {
+        BeginReadAtom();
+        var value = _reader.ReadBool();
+        return value;
+    }
+
+    public byte ReadByte()
+    {
+        BeginReadAtom();
+        return _reader.ReadByte();
     }
 
     /// <summary>
@@ -479,7 +469,7 @@ public ref struct KSerializationReader
     public KChar ReadChar()
     {
         BeginReadAtom();
-        var value = new KChar((sbyte)ReadByte());
+        var value = new KChar((sbyte)_reader.ReadByte());
         return value;
     }
 
@@ -588,6 +578,13 @@ public ref struct KSerializationReader
 
     #region Other read
 
+    public UnaryPrimitive ReadUnaryPrimitive()
+    {
+        BeginReadType();
+        var value = Read<UnaryPrimitive>();
+        EndReadType();
+        return value;
+    }
     #endregion
 
     #region Buffer read
@@ -641,7 +638,8 @@ public ref struct KSerializationReader
     public string ReadNullTerminatedString(Encoding encoding)
     {
         var bytes = GetNullTerminatedBytes();
-        return encoding.GetString(bytes);
+        // omit the null terminator
+        return encoding.GetString(bytes[..^1]);
     }
 
     /// <summary>
@@ -681,7 +679,13 @@ public ref struct KSerializationReader
     /// <returns>The bytes up to the null terminator.</returns>
     public ReadOnlySpan<byte> GetNullTerminatedBytes()
     {
-        throw new NotImplementedException();
+
+        var index = _reader.UnreadSpan.IndexOf((byte)0);
+        var result = index >= 0
+            ? _reader.UnreadSpan.Slice(0, index + 1)
+            : throw new NotImplementedException("Out of bounds reading for null-terminated string not implemented.");
+        _reader.Advance(result.Length);
+        return result;
     }
 
     #endregion

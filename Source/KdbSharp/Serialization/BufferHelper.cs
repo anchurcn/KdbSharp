@@ -142,6 +142,29 @@ namespace KdbSharp.Serialization
         }
     }
 
+    internal static class SequenceReaderExtensions
+    {
+        // ReadByte
+        public static byte ReadByte(this ref SequenceReader<byte> reader)
+        {
+            if (!reader.TryRead(out byte value))
+            {
+                throw new InvalidOperationException("Not enough data to read a byte.");
+            }
+            return value;
+        }
+
+        // Bool
+        public static bool ReadBool(this ref SequenceReader<byte> reader)
+        {
+            if (!reader.TryRead(out byte value))
+            {
+                throw new InvalidOperationException("Not enough data to read a boolean.");
+            }
+            return value != 0;
+        }
+    }
+
     public static class SerializationHelper
     {
         public static void FlipGuidTop3Parts(this ref Guid guid)

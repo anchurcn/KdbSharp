@@ -81,6 +81,17 @@ public struct KSerializationWriter
             throw new InvalidOperationException("No type is being written.");
     }
 
+    private bool IsWriting(out WriteStackFrame frame)
+    {
+        if (_stack.Count == 0)
+        {
+            frame = default;
+            return false;
+        }
+        frame = _stack.Peek();
+        return true;
+    }
+
     public void BeginWriteType(KType type)
     {
         TryWriteTypeStamp(type);
@@ -98,8 +109,7 @@ public struct KSerializationWriter
 
     private bool TryWriteTypeStamp(KType kType)
     {
-        var frame = GetCurrentFrame();
-        if (_stack.Count > 0 && frame.TypeStamp.IsAtomList())
+        if (IsWriting(out var frame) && frame.TypeStamp.IsAtomList())
         {
             // When writing an atom list, the only valid type is the its atom type and the type stamp should not be written.
             if (frame.AtomTypeStamp != kType)
