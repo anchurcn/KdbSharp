@@ -1,4 +1,4 @@
-﻿/*
+/*
  Copyright (C) 2024 Anchur
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public partial class KSerializerOptions
 
     public KSerializerOptions()
     {
-        ObjectTypeInfo = new KTypeInfo<object>(this);
+        ObjectTypeInfo = new ObjectTypeInfo(this);
         RegisterBuildInDefaultConverters();
         RegisterBuildInConverters();
     }
