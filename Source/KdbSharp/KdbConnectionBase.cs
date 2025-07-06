@@ -173,12 +173,12 @@ public class KdbConnectionBase
         {
             if (Options.Username is not null)
             {
-                writer.WriteString(Options.Username, TextEncoding);
+                writer.BufferWriter.WriteString(Options.Username, TextEncoding);
             }
             if (Options.Password is not null)
             {
-                writer.WriteString(":", TextEncoding);
-                writer.WriteString(Options.Password, TextEncoding);
+                writer.BufferWriter.WriteString(":", TextEncoding);
+                writer.BufferWriter.WriteString(Options.Password, TextEncoding);
             }
         }
         async ValueTask flushAndClearBufferAsync()
@@ -228,8 +228,8 @@ public class KdbConnectionBase
         {
             var writer = new KSerializationWriter(_bufferWriter);
             // Serialize message header.
-            writer.Write(message.HeaderMeta);
-            writer.WriteInt32(message.Size);
+            writer.BufferWriter.Write(message.HeaderMeta);
+            writer.BufferWriter.WriteInt32(message.Size);
             // Send serialized header and body.
             await Stream.WriteAsync(_bufferWriter.WrittenMemory, cancellation);
             await Stream.WriteAsync(message.Body, cancellation);

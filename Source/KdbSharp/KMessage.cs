@@ -87,30 +87,6 @@ public class KMessage : IDisposable
         _bodyMemory = _bodyOwner.Memory[..size];
     }
 
-    public static KMessage CreateReusable()
-    {
-        return new KMessage();
-    }
-
-    public void RepackUncompressedMessage(MessageType type, Endianess endianess, Memory<byte> body)
-    {
-        HeaderMeta = new MessageHeaderMeta
-        {
-            Endianess = endianess,
-            Type = type,
-            Compressed = false,
-            Unused = 0
-        };
-        Body = body;
-    }
-
-    public void RepackMessage(MessageType type, bool endianess, Memory<byte> body)
-    {
-        // TODO: Compress if needed
-        // TODO: Can pass an allocator for compressed buffer.
-        RepackUncompressedMessage(type, endianess ? Endianess.LittleEndian : Endianess.BigEndian, body);
-    }
-
     public static KMessage Alloc(MessageType type, Endianess endianess, bool compressed, int messageSize)
     {
         var message = new KMessage
@@ -142,14 +118,6 @@ public class KMessage : IDisposable
         Dispose();
     }
 
-    public KMessage Compress()
-    {
-        if (Compressed)
-        {
-            throw new InvalidOperationException("Already compressed.");
-        }
-        throw new NotImplementedException();
-    }
     public void Uncompress()
     {
         if (!Compressed)
@@ -226,54 +194,6 @@ public class KMessage : IDisposable
     }
 }
 
-//public class MessageBuilder
-//{
-
-//    public MessageBuilder() { }
-//    public MessageBuilder(MessageType type, Endianess endianess, bool compressed)
-//    {
-//        _type = type;
-//        _endianess = endianess;
-//        _compressed = compressed;
-//    }
-//    private MessageType _type;
-//    private Endianess _endianess;
-//    private bool _compressed;
-
-//    private List<byte> _buffer = new List<byte>();
-//    public KdbDataWriter _bodyWriter { get; set; }
-//    public KdbDataWriter StartWriteBody()
-//    {
-//        _bodyWriter new KdbDataWriter(new KdbWriteBuffer(_buffer, _endianess));
-//        return _bodyWriter;
-//    }
-//    public unsafe Message Build()
-//    {
-//        var buffer = _bodyWriter.ToArray();
-//        return new Message(_type, _endianess, _compressed, buffer);
-//    }
-
-//}
-//public class KdbDataWriter
-//{
-//    MemoryStream MemoryStream;
-//    public byte[] ToArray()
-//    {
-//        return MemoryStream.ToArray();
-//    }
-//    public void Write(byte[] buffer)
-//    {
-//        MemoryStream.Write(buffer);
-//    }
-//    public void WriteInt32(int value)
-//    {
-//        MemoryStream.Write(BitConverter.GetBytes(value));
-//    }
-//    public void Write<T>(KdbType atomType, T value)
-//    {
-
-//    }
-//}
 /*
 
 ## Protocol

@@ -16,52 +16,8 @@ using KdbSharp.Serialization;
 using KdbSharp.Types;
 using System.Buffers;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace KdbSharp;
-
-public readonly struct KdbCommand<T>
-    where T : struct
-{
-    private readonly T _parameterizedQuery;
-    private readonly KdbConnection _connection;
-    public KdbCommand(T parameterizedQuery, KdbConnection connection)
-    {
-        _parameterizedQuery = parameterizedQuery;
-        _connection = connection;
-    }
-
-    public async Task<TResult?> GetAsync<TResult>(KSerializerOptions? options = null, CancellationToken cancellation = default)
-    {
-        await _connection.SendParameterizedQueryObjectAsync(_parameterizedQuery, MessageType.Request, options, cancellation);
-        return await _connection.RecvResponseObjectAsync<TResult>(options, cancellation);
-    }
-
-    public Task<object?> GetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
-    {
-        return GetAsync<object?>(options, cancellation);
-    }
-    public Task SetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
-    {
-        return _connection.SendParameterizedQueryObjectAsync(_parameterizedQuery, MessageType.Async, options, cancellation);
-    }
-
-    #region MayRemove
-    public async Task<TResult?> GetAsync<TResult>(SerializeHandler<T> serializeHandler,
-        DeserializeHandler<TResult?> deserializeHandler, KSerializerOptions options,
-        CancellationToken cancellation = default)
-    {
-        // 这个方法承担了太多的职责，如果真要有那么多自定义的序列化和反序列化逻辑，
-        // 应该使用 KSerializer.Serialize 和 Deserialize 方法来处理
-        throw new NotImplementedException();
-    }
-
-    public Task SetAsync(SerializeHandler<T> serializeHandler, KSerializerOptions? options = null, CancellationToken cancellation = default)
-    {
-        throw new NotImplementedException();
-    }
-    #endregion
-}
 
 public class KdbConnection : KdbConnectionBase
 {
@@ -71,6 +27,70 @@ public class KdbConnection : KdbConnectionBase
     }
     private readonly ArrayBufferWriter<byte> _bufferWriter = new();
 
+    // Reader/Writer holds a buffer, and KMessage can just reference the buffer by Memory<byte>(a view of part of the buffer).
+    public async Task<TResult?> GetAsync<TResult>(string expr, KSerializerOptions? options = null, CancellationToken cancellation = default)
+    {
+        await SendQueryObjectAsync(expr, MessageType.Request, options, cancellation);
+        return await RecvResponseObjectAsync<TResult>(options, cancellation);
+    }
+
+    public Task SetAsync(string expr, CancellationToken cancellation = default)
+    {
+        // Serialize and send an async KMessage.
+        return SendQueryObjectAsync(expr, MessageType.Async, null, cancellation);
+    }
+
+    #region CreateCommand
+
+    static KdbCommand<T> CreateCommandInternal<T>(T parameterizedQuery, KdbConnection connection)
+        where T : struct
+    {
+        return new KdbCommand<T>(parameterizedQuery, connection);
+    }
+
+    public KdbCommand<(string, TArg1)> CreateCommand<TArg1>(string func, TArg1 arg1)
+    {
+        return CreateCommandInternal((func, arg1), this);
+    }
+
+    public KdbCommand<(string, TArg1, TArg2)> CreateCommand<TArg1, TArg2>(string func, TArg1 arg1, TArg2 arg2)
+    {
+        return CreateCommandInternal((func, arg1, arg2), this);
+    }
+
+    public KdbCommand<(string, TArg1, TArg2, TArg3)> CreateCommand<TArg1, TArg2, TArg3>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3)
+    {
+        return CreateCommandInternal((func, arg1, arg2, arg3), this);
+    }
+
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4)> CreateCommand<TArg1, TArg2, TArg3, TArg4>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4)
+    {
+        return CreateCommandInternal((func, arg1, arg2, arg3, arg4), this);
+    }
+
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5)
+    {
+        return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5), this);
+    }
+
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6)
+    {
+        return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6), this);
+    }
+
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7)
+    {
+        return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6, arg7), this);
+    }
+
+    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7, TArg8 arg8)
+    {
+        return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8), this);
+    }
+    #endregion
+
+#region Others
+    
 
     // Where T is ValueTuple and if first is string then serialize as KType.CharList.
     class ParameterizedQueryConverter<T>
@@ -124,20 +144,18 @@ public class KdbConnection : KdbConnectionBase
     }
     public async Task SendQueryObjectAsync(string expr, MessageType messageType, KSerializerOptions? options, CancellationToken cancellation)
     {
-        var bufferWriter = new ArrayBufferWriter<byte>();
-        var writer = new KSerializationWriter(bufferWriter);
+        var writer = new KSerializationWriter(_bufferWriter);
         KSerializer.Serialize(ref writer, expr, KType.CharList, options);
-        await SendAsync(bufferWriter.WrittenMemory, messageType, writer.IsLittleEndian, false, cancellation).ConfigureAwait(false);
-        bufferWriter.Clear();
+        await SendAsync(_bufferWriter.WrittenMemory, messageType, writer.IsLittleEndian, false, cancellation).ConfigureAwait(false);
+        _bufferWriter.Clear();
     }
     public async Task SendParameterizedQueryObjectAsync<TQuery>(TQuery parameterizedQuery, MessageType messageType, KSerializerOptions? options, CancellationToken cancellation)
-        where TQuery: struct
+        where TQuery : struct
     {
-        var bufferWriter = new ArrayBufferWriter<byte>();
-        var writer = new KSerializationWriter(bufferWriter);
+        var writer = new KSerializationWriter(_bufferWriter);
         KSerializer.Serialize(ref writer, parameterizedQuery, ConvertParameterizedQuery, options);
-        await SendAsync(bufferWriter.WrittenMemory, messageType, writer.IsLittleEndian, false, cancellation).ConfigureAwait(false);
-        bufferWriter.Clear();
+        await SendAsync(_bufferWriter.WrittenMemory, messageType, writer.IsLittleEndian, false, cancellation).ConfigureAwait(false);
+        _bufferWriter.Clear();
 
         static void ConvertParameterizedQuery(ref KSerializationWriter writer, TQuery value, KSerializerOptions options)
         {
@@ -153,109 +171,61 @@ public class KdbConnection : KdbConnectionBase
             }
         }
     }
-        public async Task SendMessage(ReadOnlyMemory<byte> uncompressedBody, MessageType type, bool isLittleEndian, CancellationToken cancellation = default)
+    public async Task SendMessage(ReadOnlyMemory<byte> uncompressedBody, MessageType type, bool isLittleEndian, CancellationToken cancellation = default)
     {
         // TODO: compress body if needed
-        await SendAsync(uncompressedBody, type, isLittleEndian, compressed:false, cancellation).ConfigureAwait(false);
+        await SendAsync(uncompressedBody, type, isLittleEndian, compressed: false, cancellation).ConfigureAwait(false);
     }
 
     private async Task SendAsync(ReadOnlyMemory<byte> body, MessageType type, bool isLittleEndian, bool compressed, CancellationToken cancellation)
-        => throw new NotImplementedException();
-
-    // Impl SendAsync and RecvAsync but without using KMessage.
-
-
-    // Reader/Writer holds a buffer, and KMessage can just reference the buffer by Memory<byte>(a view of part of the buffer).
-    public async Task<TResult?> GetAsync<TResult>(string expr, KSerializerOptions? options = null, CancellationToken cancellation = default)
     {
-        await SendQueryObjectAsync(expr, MessageType.Request, options, cancellation);
-        return await RecvResponseObjectAsync<TResult>(options, cancellation);
+        // Create a KMessage with the provided body data
+        var endianess = isLittleEndian ? Endianess.LittleEndian : Endianess.BigEndian;
+        var message = KMessage.Alloc(type, endianess, compressed, KMessage.HEADER_SIZE + body.Length);
+
+        // Copy the body data to the message
+        body.CopyTo(message.Body);
+
+        try
+        {
+            // Send the message using the base class method
+            await SendAsync(message, cancellation).ConfigureAwait(false);
+        }
+        finally
+        {
+            // Dispose the message to free the allocated memory
+            message.Dispose();
+        }
     }
 
-    public Task SetAsync(string expr, CancellationToken cancellation = default)
-    {
-        // Serialize and send an async KMessage.
-        return SendQueryObjectAsync(expr, MessageType.Async, null, cancellation);
-    }
-
-    static KdbCommand<T> CreateCommandInternal<T>(T parameterizedQuery, KdbConnection connection)
-        where T : struct
-    {
-        return new KdbCommand<T>(parameterizedQuery, connection);
-    }
-
-    #region CreateCommand
-
-    public KdbCommand<(string, TArg1)> CreateCommand<TArg1>(string func, TArg1 arg1)
-    {
-        return CreateCommandInternal((func, arg1), this);
-    }
-
-    public KdbCommand<(string, TArg1, TArg2)> CreateCommand<TArg1, TArg2>(string func, TArg1 arg1, TArg2 arg2)
-    {
-        return CreateCommandInternal((func, arg1, arg2), this);
-    }
-
-    public KdbCommand<(string, TArg1, TArg2, TArg3)> CreateCommand<TArg1, TArg2, TArg3>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3)
-    {
-        return CreateCommandInternal((func, arg1, arg2, arg3), this);
-    }
-
-    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4)> CreateCommand<TArg1, TArg2, TArg3, TArg4>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4)
-    {
-        return CreateCommandInternal((func, arg1, arg2, arg3, arg4), this);
-    }
-
-    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5)
-    {
-        return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5), this);
-    }
-
-    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6)
-    {
-        return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6), this);
-    }
-
-    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7)
-    {
-        return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6, arg7), this);
-    }
-
-    public KdbCommand<(string, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8)> CreateCommand<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8>(string func, TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7, TArg8 arg8)
-    {
-        return CreateCommandInternal((func, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8), this);
-    }
-    #endregion
+#endregion
 
 }
 
-public static class ConnectionExtensions
+// For parameterized query
+public readonly struct KdbCommand<T>
+    where T : struct
 {
-    public static async IAsyncEnumerable<KMessage> Subscribe(this KdbConnection connection, [EnumeratorCancellation] CancellationToken cancellation = default)
+    private readonly T _parameterizedQuery;
+    private readonly KdbConnection _connection;
+    public KdbCommand(T parameterizedQuery, KdbConnection connection)
     {
-        while (!cancellation.IsCancellationRequested)
-        {
-            var message = await connection.RecvAsync(cancellation).ConfigureAwait(false);
-            if (message.Type != MessageType.Async)
-            {
-                if (message.Type == MessageType.Request)
-                {
-                    throw new InvalidOperationException(
-                        "Unexpected request message.");
-                }
-                else if (message.Type == MessageType.Response)
-                {
-                    throw new InvalidOperationException(
-                        "Unexpected response message.");
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        "Unknown message type.");
-                }
-            }
+        _parameterizedQuery = parameterizedQuery;
+        _connection = connection;
+    }
 
-            yield return message;
-        }
+    public async Task<TResult?> GetAsync<TResult>(KSerializerOptions? options = null, CancellationToken cancellation = default)
+    {
+        await _connection.SendParameterizedQueryObjectAsync(_parameterizedQuery, MessageType.Request, options, cancellation);
+        return await _connection.RecvResponseObjectAsync<TResult>(options, cancellation);
+    }
+
+    public Task<object?> GetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
+    {
+        return GetAsync<object?>(options, cancellation);
+    }
+    public Task SetAsync(KSerializerOptions? options = null, CancellationToken cancellation = default)
+    {
+        return _connection.SendParameterizedQueryObjectAsync(_parameterizedQuery, MessageType.Async, options, cancellation);
     }
 }
