@@ -1,0 +1,435 @@
+﻿: [
+65 00
+];
+
+boolean: [
+01 00 02 00 00 00 00 01
+];
+
+guid: [
+02 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 11 22 33 44 55 66 77 88 99 AA
+BB CC DD EE FF AA
+];
+
+byte: [
+04 00 02 00 00 00 00 FF
+];
+
+char: [
+0A 00 02 00 00 00 20 61
+];
+
+symbol: [
+0B 00 02 00 00 00 00 61 00
+];
+
+short: [
+00 00 06 00 00 00 FB 00 00 FB 00 80 FB FF 7F FB 01 80 FB FE 7F F9 02 80 FF FF FF FF FF FF
+];
+
+int: [
+00 00 06 00 00 00 FA 00 00 00 00 FA 00 00 00 80 FA FF FF FF 7F FA 01 00 00 80 F9 FE FF FF 7F 00
+00 00 00 F9 02 00 00 80 FF FF FF FF
+];
+
+long: [
+07 00 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 FF FF FF FF FF FF FF 7F 01 00
+00 00 00 00 00 80 FE FF FF FF FF FF FF 7F 02 00 00 00 00 00 00 80
+];
+
+real: [
+08 00 06 00 00 00 00 00 00 00 00 00 C0 FF 00 00 80 7F 00 00 80 FF 19 A9 DF 47 19 A9 DF C7
+];
+
+float: [
+09 00 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 F8 FF 00 00 00 00 00 00 F0 7F 00 00
+00 00 00 00 F0 FF 47 AB 5A 12 23 F5 FB 40 47 AB 5A 12 23 F5 FB C0
+];
+
+timestamp: [
+0C 00 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 FF FF FF FF FF FF FF 7F 01 00
+00 00 00 00 00 80 FE FF FF FF FF FF FF 7F 02 00 00 00 00 00 00 80
+];
+
+month: [
+0D 00 06 00 00 00 00 00 00 00 00 00 00 80 FF FF FF 7F 01 00 00 80 FE FF FF 7F 02 00 00 80
+];
+
+date: [
+0E 00 06 00 00 00 00 00 00 00 00 00 00 80 FF FF FF 7F 01 00 00 80 FE FF FF 7F 02 00 00 80
+];
+
+datetime: [
+0F 00 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 F8 FF 00 00 00 00 00 00 F0 7F 00 00
+00 00 00 00 F0 FF 47 AB 5A 12 23 F5 FB 40 47 AB 5A 12 23 F5 FB C0
+];
+
+timespan: [
+10 00 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 FF FF FF FF FF FF FF 7F 01 00
+00 00 00 00 00 80 FE FF FF FF FF FF FF 7F 02 00 00 00 00 00 00 80
+];
+
+minute: [
+11 00 06 00 00 00 00 00 00 00 00 00 00 80 FF FF FF 7F 01 00 00 80 FE FF FF 7F 02 00 00 80
+];
+
+second: [
+12 00 06 00 00 00 00 00 00 00 00 00 00 80 FF FF FF 7F 01 00 00 80 FE FF FF 7F 02 00 00 80
+];
+
+time: [
+13 00 06 00 00 00 00 00 00 00 00 00 00 80 FF FF FF 7F 01 00 00 80 FE FF FF 7F 02 00 00 80
+];
+
+boolean_false: [
+FF 00
+];
+
+boolean_true: [
+FF 01
+];
+
+guid_null: [
+FE 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+];
+
+guid_value: [
+FE 11 22 33 44 55 66 77 88 99 AA BB CC DD EE FF AA
+];
+
+byte_zero: [
+FC 00
+];
+
+byte_max: [
+FC FF
+];
+
+char_null: [
+F6 20
+];
+
+char_value: [
+F6 61
+];
+
+symbol_null: [
+F5 00
+];
+
+symbol_value: [
+F5 61 00
+];
+
+short_zero: [
+FB 00 00
+];
+
+short_null: [
+FB 00 80
+];
+
+short_inf: [
+FB FF 7F
+];
+
+short_ninf: [
+FB 01 80
+];
+
+short_max: [
+FB FE 7F
+];
+
+short_min: [
+FB 02 80
+];
+
+int_zero: [
+FA 00 00 00 00
+];
+
+int_null: [
+FA 00 00 00 80
+];
+
+int_inf: [
+FA FF FF FF 7F
+];
+
+int_ninf: [
+FA 01 00 00 80
+];
+
+int_max: [
+F9 FE FF FF 7F 00 00 00 00
+];
+
+int_min: [
+F9 02 00 00 80 FF FF FF FF
+];
+
+long_zero: [
+F9 00 00 00 00 00 00 00 00
+];
+
+long_null: [
+F9 00 00 00 00 00 00 00 80
+];
+
+long_inf: [
+F9 FF FF FF FF FF FF FF 7F
+];
+
+long_ninf: [
+F9 01 00 00 00 00 00 00 80
+];
+
+long_max: [
+F9 FE FF FF FF FF FF FF 7F
+];
+
+long_min: [
+F9 02 00 00 00 00 00 00 80
+];
+
+real_zero: [
+F8 00 00 00 00
+];
+
+real_null: [
+F8 00 00 C0 FF
+];
+
+real_inf: [
+F8 00 00 80 7F
+];
+
+real_ninf: [
+F8 00 00 80 FF
+];
+
+real_max: [
+F8 19 A9 DF 47
+];
+
+real_min: [
+F8 19 A9 DF C7
+];
+
+float_zero: [
+F7 00 00 00 00 00 00 00 00
+];
+
+float_null: [
+F7 00 00 00 00 00 00 F8 FF
+];
+
+float_inf: [
+F7 00 00 00 00 00 00 F0 7F
+];
+
+float_ninf: [
+F7 00 00 00 00 00 00 F0 FF
+];
+
+float_max: [
+F7 47 AB 5A 12 23 F5 FB 40
+];
+
+float_min: [
+F7 47 AB 5A 12 23 F5 FB C0
+];
+
+timestamp_zero: [
+F4 00 00 00 00 00 00 00 00
+];
+
+timestamp_null: [
+F4 00 00 00 00 00 00 00 80
+];
+
+timestamp_inf: [
+F4 FF FF FF FF FF FF FF 7F
+];
+
+timestamp_ninf: [
+F4 01 00 00 00 00 00 00 80
+];
+
+timestamp_max: [
+F4 FE FF FF FF FF FF FF 7F
+];
+
+timestamp_min: [
+F4 02 00 00 00 00 00 00 80
+];
+
+month_zero: [
+F3 00 00 00 00
+];
+
+month_null: [
+F3 00 00 00 80
+];
+
+month_inf: [
+F3 FF FF FF 7F
+];
+
+month_ninf: [
+F3 01 00 00 80
+];
+
+month_max: [
+F3 FE FF FF 7F
+];
+
+month_min: [
+F3 02 00 00 80
+];
+
+date_zero: [
+F2 00 00 00 00
+];
+
+date_null: [
+F2 00 00 00 80
+];
+
+date_inf: [
+F2 FF FF FF 7F
+];
+
+date_ninf: [
+F2 01 00 00 80
+];
+
+date_max: [
+F2 FE FF FF 7F
+];
+
+date_min: [
+F2 02 00 00 80
+];
+
+datetime_zero: [
+F1 00 00 00 00 00 00 00 00
+];
+
+datetime_null: [
+F1 00 00 00 00 00 00 F8 FF
+];
+
+datetime_inf: [
+F1 00 00 00 00 00 00 F0 7F
+];
+
+datetime_ninf: [
+F1 00 00 00 00 00 00 F0 FF
+];
+
+datetime_max: [
+F1 47 AB 5A 12 23 F5 FB 40
+];
+
+datetime_min: [
+F1 47 AB 5A 12 23 F5 FB C0
+];
+
+timespan_zero: [
+F0 00 00 00 00 00 00 00 00
+];
+
+timespan_null: [
+F0 00 00 00 00 00 00 00 80
+];
+
+timespan_inf: [
+F0 FF FF FF FF FF FF FF 7F
+];
+
+timespan_ninf: [
+F0 01 00 00 00 00 00 00 80
+];
+
+timespan_max: [
+F0 FE FF FF FF FF FF FF 7F
+];
+
+timespan_min: [
+F0 02 00 00 00 00 00 00 80
+];
+
+minute_zero: [
+EF 00 00 00 00
+];
+
+minute_null: [
+EF 00 00 00 80
+];
+
+minute_inf: [
+EF FF FF FF 7F
+];
+
+minute_ninf: [
+EF 01 00 00 80
+];
+
+minute_max: [
+EF FE FF FF 7F
+];
+
+minute_min: [
+EF 02 00 00 80
+];
+
+second_zero: [
+EE 00 00 00 00
+];
+
+second_null: [
+EE 00 00 00 80
+];
+
+second_inf: [
+EE FF FF FF 7F
+];
+
+second_ninf: [
+EE 01 00 00 80
+];
+
+second_max: [
+EE FE FF FF 7F
+];
+
+second_min: [
+EE 02 00 00 80
+];
+
+time_zero: [
+ED 00 00 00 00
+];
+
+time_null: [
+ED 00 00 00 80
+];
+
+time_inf: [
+ED FF FF FF 7F
+];
+
+time_ninf: [
+ED 01 00 00 80
+];
+
+time_max: [
+ED FE FF FF 7F
+];
+
+time_min: [
+ED 02 00 00 80
+];
+
