@@ -27,12 +27,10 @@ public class KDictionaryConverter<T> : KTypeConverter<T> // where T: KSimpleDict
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (reader.TypeStamp != KType.Dictionary)
-        {
-            throw new InvalidOperationException();
-        }
+        reader.StartReadDictionary();
         var keys = KSerializer.Deserialize<object>(ref reader, options);
         var values = KSerializer.Deserialize<object>(ref reader, options);
+        reader.EndReadDictionary();
         if (keys is Array keyArray && values is Array valueArray)
         {
             return (T)(object)new KSimpleDictionary(keyArray, valueArray);

@@ -27,10 +27,8 @@ public class KTableConverter : KTypeConverter<KTable>
 
     public override KTable Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (reader.TypeStamp != KType.Table)
-        {
-            throw new InvalidOperationException();
-        }
+        throw new NotImplementedException();
+        reader.StartReadTable();
         var colNames = KSerializer.Deserialize<string[]>(ref reader, options);
         var columns = new KTable.Column[colNames.Length];
         var colData = new Array[colNames.Length];
@@ -48,6 +46,7 @@ public class KTableConverter : KTypeConverter<KTable>
             columns[i] = new KTable.Column(colType, colNames[i]);
         }
         reader.EndReadType();
+        reader.EndReadTable();
         return new KTable(columns, colData);
     }
 

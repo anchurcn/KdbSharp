@@ -32,15 +32,15 @@ namespace KdbSharp.Serialization.Converters
 
         public override object[] Read(ref KSerializationReader reader, KSerializerOptions options)
         {
+            reader.StartReadList();
             var len = reader.ListLength ?? throw new KSerializationException("Array length is null.");
             var arr = new object[len];
             for (int i = 0; i < len; i++)
             {
-                var elemType = reader.BeginReadType();
-                var elemTypeInfo = options.GetTypeInfo(typeof(object));
-                arr[i] = elemTypeInfo.DeserializeAsObject(ref reader)!;
-                reader.EndReadType();
+                arr[i] = KSerializer.Deserialize(ref reader, typeof(object), options);
             }
+
+            reader.EndReadList();
             return arr;
         }
 

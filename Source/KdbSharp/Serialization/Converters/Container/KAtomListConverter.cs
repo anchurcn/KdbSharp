@@ -80,16 +80,11 @@ public class KArrayConverter<TElem> : KTypeConverter<TElem[]>
 
     public override TElem[] Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if(reader.TypeStamp != _kt)
-        {
-            throw new InvalidOperationException();
-        }
-
         if (_elemConverter is null)
         {
             throw new InvalidOperationException();
         }
-
+        reader.StartReadList();
         var count = reader.ListLength ?? throw new InvalidOperationException();
 
         var arr = new TElem[count];
@@ -97,6 +92,7 @@ public class KArrayConverter<TElem> : KTypeConverter<TElem[]>
         {
             arr[i] = _elemConverter.Read(ref reader, options);
         }
+        reader.EndReadList();
         return arr;
     }
 
@@ -136,11 +132,6 @@ public class KAtomListConverter<TElem,T> : KTypeConverter<T>
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if(reader.TypeStamp != _kt)
-        {
-            throw new InvalidOperationException();
-        }
-
         if (_elemConverter is null)
         {
             throw new InvalidOperationException();

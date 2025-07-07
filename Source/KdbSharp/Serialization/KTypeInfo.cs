@@ -228,11 +228,11 @@ public class KTypeInfo<T> : KTypeInfo
 
         if (kType is null && TryGetConverter<T>(out var defaultConverter))
         {
-            defaultConverter.Write(ref writer, value!, Options);
+            defaultConverter.Write(ref writer, value, Options);
         }
         else if (kType is KType kt && TryGetConverter<T>(kt, out var converter))
         {
-            converter.Write(ref writer, value!, Options);
+            converter.Write(ref writer, value, Options);
         }
         else
         {
@@ -284,7 +284,13 @@ public class ObjectTypeInfo : KTypeInfo<object>
         var nextTypeStamp = reader.NextTypeStamp;
         if (TryGetDefaultKTypeConverter(nextTypeStamp, out var converter))
         {
-            return converter.ReadAsObject(ref reader, Options);
+            var value = converter.ReadAsObject(ref reader, Options);
+            if (value is KdbException exception)
+            {
+                throw exception;
+            }
+
+            return value;
         }
         else
         {

@@ -153,16 +153,6 @@ namespace KdbSharp.Serialization
             }
             return value;
         }
-
-        // Bool
-        public static bool ReadBool(this ref SequenceReader<byte> reader)
-        {
-            if (!reader.TryRead(out byte value))
-            {
-                throw new InvalidOperationException("Not enough data to read a boolean.");
-            }
-            return value != 0;
-        }
     }
 
     public static class SerializationHelper

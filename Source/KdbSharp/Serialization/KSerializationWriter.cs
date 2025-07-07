@@ -367,6 +367,11 @@ public struct KSerializationWriter
     public void StartWriteList(KType listType, int length, byte attributes = 0)
     {
         // TODO: throw if listType is not a list type
+        if (!listType.IsList())
+        {
+            throw new ArgumentException($"Invalid list type: {listType}. Expected a list type.", nameof(listType));
+        }
+
         BeginWriteType(listType);
         _writer.WriteByte(attributes);
         _writer.WriteInt32(length);
