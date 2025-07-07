@@ -287,8 +287,10 @@ public ref struct KSerializationReader
 
     public byte ReadByte()
     {
-        BeginReadAtom();
-        return _reader.ReadByte();
+        var type = BeginReadAtom();
+        var value = _reader.ReadByte();
+        EndReadAtom(type);
+        return value;
     }
 
     /// <summary>
@@ -297,12 +299,13 @@ public ref struct KSerializationReader
     /// <returns>The GUID value.</returns>
     public Guid ReadGuid()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var result = Read<Guid>();
         if (IsLittleEndian)
         {
             SerializationHelper.FlipGuidTop3Parts(ref result);
         }
+        EndReadAtom(type);
         return result;
     }
 
@@ -312,8 +315,9 @@ public ref struct KSerializationReader
     /// <returns>The KShort value.</returns>
     public KShort ReadShort()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KShort(ReadInt16());
+        EndReadAtom(type);
         return value;
     }
 
@@ -323,8 +327,9 @@ public ref struct KSerializationReader
     /// <returns>The KInt value.</returns>
     public KInt ReadInt()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KInt(ReadInt32());
+        EndReadAtom(type);
         return value;
     }
 
@@ -334,8 +339,9 @@ public ref struct KSerializationReader
     /// <returns>The KLong value.</returns>
     public KLong ReadLong()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KLong(ReadInt64());
+        EndReadAtom(type);
         return value;
     }
 
@@ -345,8 +351,9 @@ public ref struct KSerializationReader
     /// <returns>The KReal value.</returns>
     public KReal ReadReal()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KReal(ReadSingle());
+        EndReadAtom(type);
         return value;
     }
 
@@ -356,8 +363,9 @@ public ref struct KSerializationReader
     /// <returns>The KFloat value.</returns>
     public KFloat ReadFloat()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KFloat(ReadDouble());
+        EndReadAtom(type);
         return value;
     }
 
@@ -367,8 +375,9 @@ public ref struct KSerializationReader
     /// <returns>The KChar value.</returns>
     public KChar ReadChar()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KChar((sbyte)_reader.ReadByte());
+        EndReadAtom(type);
         return value;
     }
 
@@ -378,8 +387,9 @@ public ref struct KSerializationReader
     /// <returns>The symbol value as a string.</returns>
     public string ReadSymbol()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = ReadNullTerminatedString();
+        EndReadAtom(type);
         return value;
     }
 
@@ -391,8 +401,9 @@ public ref struct KSerializationReader
     /// <returns>The KTimestamp value.</returns>
     public KTimestamp ReadTimestamp()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KTimestamp(ReadInt64());
+        EndReadAtom(type);
         return value;
     }
 
@@ -402,8 +413,9 @@ public ref struct KSerializationReader
     /// <returns>The KDate value.</returns>
     public KDate ReadDate()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KDate(ReadInt32());
+        EndReadAtom(type);
         return value;
     }
 
@@ -413,8 +425,9 @@ public ref struct KSerializationReader
     /// <returns>The KTime value.</returns>
     public KTime ReadTime()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KTime(ReadInt32());
+        EndReadAtom(type);
         return value;
     }
 
@@ -424,8 +437,9 @@ public ref struct KSerializationReader
     /// <returns>The KDateTime value.</returns>
     public KDateTime ReadDateTime()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KDateTime(ReadDouble());
+        EndReadAtom(type);
         return value;
     }
 
@@ -435,8 +449,9 @@ public ref struct KSerializationReader
     /// <returns>The KTimeSpan value.</returns>
     public KTimeSpan ReadTimeSpan()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KTimeSpan(ReadInt64());
+        EndReadAtom(type);
         return value;
     }
 
@@ -446,8 +461,9 @@ public ref struct KSerializationReader
     /// <returns>The KMonth value.</returns>
     public KMonth ReadMonth()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KMonth(ReadInt32());
+        EndReadAtom(type);
         return value;
     }
 
@@ -457,8 +473,9 @@ public ref struct KSerializationReader
     /// <returns>The KMinute value.</returns>
     public KMinute ReadMinute()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KMinute(ReadInt32());
+        EndReadAtom(type);
         return value;
     }
 
@@ -468,8 +485,9 @@ public ref struct KSerializationReader
     /// <returns>The KSecond value.</returns>
     public KSecond ReadSecond()
     {
-        BeginReadAtom();
+        var type = BeginReadAtom();
         var value = new KSecond(ReadInt32());
+        EndReadAtom(type);
         return value;
     }
 
