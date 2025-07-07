@@ -111,6 +111,8 @@ public ref struct KSerializationReader
     /// </summary>
     public KType? AtomTypeStamp => GetCurrentFrame().AtomTypeStamp;
 
+    public KType? LastNestedType => GetCurrentFrame().LastNestedType;
+
     /// <summary>
     /// Initializes a new instance of the KSerializationReader struct.
     /// </summary>
