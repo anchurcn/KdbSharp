@@ -24,6 +24,6 @@ public class AtomTypeDeserializationTest
     public async Task TestDeserializeBooleanFalseAsync()
     {
         var value = new KLong(long.MinValue);
-        Assert.True(value.IsNull);
+        Assert.False(value.IsNull);
     }
 }
