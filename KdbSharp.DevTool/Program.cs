@@ -10,30 +10,118 @@
  * 后续为这些变量生成读取测试用例，测试数据就读取这些序列化的字节流
  */
 
+using DevTool;
 using KdbSharp;
 using System.Text;
 
-Console.WriteLine("KdbSharp DevTool - Generating test data from KDB alltype namespace");
-Console.WriteLine("================================================================");
+// Main menu
+Console.WriteLine("KdbSharp DevTool");
+Console.WriteLine("================");
+Console.WriteLine();
+Console.WriteLine("Available options:");
+Console.WriteLine("1. Generate test data from KDB alltype namespace");
+Console.WriteLine("2. Test Container types reading from KDB");
+Console.WriteLine("3. Exit");
+Console.WriteLine();
 
-try
+while (true)
 {
-    await GenerateTestDataAsync();
-    Console.WriteLine("Test data generation completed successfully!");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Error: {ex.Message}");
-    Console.WriteLine($"Stack trace: {ex.StackTrace}");
-    return 1;
+    Console.Write("Please select an option (1-3): ");
+    var input = Console.ReadLine();
+
+    switch (input)
+    {
+        case "1":
+            await RunGenerateTestDataAsync();
+            break;
+        case "2":
+            await RunContainerTypeTestAsync();
+            break;
+        case "3":
+            Console.WriteLine("Goodbye!");
+            return 0;
+        default:
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Invalid option. Please select 1, 2, or 3.");
+            Console.ResetColor();
+            continue;
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Press any key to return to main menu...");
+    Console.ReadKey();
+    Console.Clear();
+    Console.WriteLine("KdbSharp DevTool");
+    Console.WriteLine("================");
+    Console.WriteLine();
+    Console.WriteLine("Available options:");
+    Console.WriteLine("1. Generate test data from KDB alltype namespace");
+    Console.WriteLine("2. Test Container types reading from KDB");
+    Console.WriteLine("3. Exit");
+    Console.WriteLine();
 }
 
-return 0;
+static async Task RunContainerTypeTestAsync()
+{
+    Console.WriteLine();
+    Console.WriteLine("Container Type Test");
+    Console.WriteLine("==================");
+
+    Console.Write("Enter connection string (default: localhost:5000): ");
+    var connectionString = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        connectionString = "localhost:5000";
+    }
+
+    Console.WriteLine($"Connecting to: {connectionString}");
+    Console.WriteLine();
+
+    try
+    {
+        var tester = new ContainerTypeTest(connectionString);
+        await tester.RunAllTestsAsync();
+    }
+    catch (Exception ex)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"Error running container type test: {ex.Message}");
+        Console.ResetColor();
+    }
+}
+
+static async Task RunGenerateTestDataAsync()
+{
+    Console.WriteLine();
+    Console.WriteLine("Generate Test Data from KDB alltype namespace");
+    Console.WriteLine("=============================================");
+
+    try
+    {
+        await GenerateTestDataAsync();
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("Test data generation completed successfully!");
+        Console.ResetColor();
+    }
+    catch (Exception ex)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"Error: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        Console.ResetColor();
+    }
+}
+
 
 static async Task GenerateTestDataAsync()
 {
-    const string host = "localhost";
-    const int port = 5000;
+    Console.Write("Enter KDB host (default: localhost): ");
+    var hostInput = Console.ReadLine();
+    var host = string.IsNullOrWhiteSpace(hostInput) ? "localhost" : hostInput;
+
+    Console.Write("Enter KDB port (default: 5000): ");
+    var portInput = Console.ReadLine();
+    var port = string.IsNullOrWhiteSpace(portInput) ? 5000 : int.Parse(portInput);
 
     // Output to test project directory
     const string testProjectDir = "../../../../Tests/KdbSharp.Test";
