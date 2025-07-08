@@ -529,6 +529,14 @@ public ref struct KSerializationReader
         EndReadType();
         return value;
     }
+
+    public string ReadCharListAsString()
+    {
+        StartReadList();
+        var result = ReadString(ListLength ?? throw new InvalidOperationException(), TextEncoding);
+        EndReadList();
+        return result;
+    }
     #endregion
 
     #region Read helper

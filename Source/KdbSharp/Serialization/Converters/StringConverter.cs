@@ -31,7 +31,7 @@ namespace KdbSharp.Serialization.Converters
         }
         public override string Read(ref KSerializationReader reader, KSerializerOptions options)
         {
-            return reader.ReadString(reader.ListLength.GetValueOrDefault());
+            return reader.ReadCharListAsString();
         }
 
         public override void Write(ref KSerializationWriter writer, string value, KSerializerOptions options)

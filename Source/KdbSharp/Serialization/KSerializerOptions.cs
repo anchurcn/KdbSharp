@@ -33,7 +33,6 @@ public partial class KSerializerOptions
 {
     public void RegisterBuildInDefaultConverters()
     {
-
         RegisterDefaultConverter<bool>(KType.Boolean, new KBooleanConverter());
         RegisterDefaultConverter<Guid>(KType.Guid, new KGuidConverter());
         RegisterDefaultConverter<byte>(KType.Byte, new KByteConverter());
@@ -45,74 +44,42 @@ public partial class KSerializerOptions
         RegisterDefaultConverter<char>(KType.Char, new KCharConverter<char>());
         RegisterDefaultConverter<string>(KType.Symbol, new KSymbolConverter());
 
-        // DateTime=Timestamp
         RegisterDefaultConverter<DateTime>(KType.Timestamp, new KDateTimeConverter<DateTime>());
-        // Month
         RegisterDefaultConverter<DateTime>(KType.Month, new KMonthConverter<DateTime>());
-        // Date
         RegisterDefaultConverter<DateTime>(KType.Date, new KDateConverter<DateTime>());
-        // DateTime
         RegisterDefaultConverter<DateTime>(KType.DateTime, new KDateTimeConverter<DateTime>());
-        // Timespan
         RegisterDefaultConverter<TimeSpan>(KType.TimeSpan, new KTimeSpanConverter<TimeSpan>());
-        // Minute
         RegisterDefaultConverter<TimeSpan>(KType.Minute, new KMinuteConverter<TimeSpan>());
-        // Second
         RegisterDefaultConverter<TimeSpan>(KType.Second, new KSecondConverter<TimeSpan>());
-        // Time
         RegisterDefaultConverter<TimeSpan>(KType.Time, new KTimeConverter<TimeSpan>());
 
-        // Complex
         RegisterDefaultConverter<object[]>(KType.GeneralList, new KGenericListConverter());
-        // Dictionary
         RegisterDefaultConverter<KSimpleDictionary>(KType.Dictionary, new KDictionaryConverter<object>());
         RegisterDefaultConverter<KTable>(KType.Table, new KTableConverter());
-        // Unit
         RegisterDefaultConverter<KUnit>(KType.UnaryPrimitive, new KUnitConverter());
-        // Error
         RegisterDefaultConverter<KdbException>(KType.Error, new KdbExceptionConverter());
 
-        // Atom List
         RegisterDefaultConverter<bool[]>(KType.BooleanList, new KArrayConverter<bool>(KType.BooleanList, new KBooleanConverter()));
-        // Guid
         RegisterDefaultConverter<Guid[]>(KType.GuidList, new KArrayConverter<Guid>(KType.GuidList, new KGuidConverter()));
-        // Byte
         RegisterDefaultConverter<byte[]>(KType.ByteList, new KArrayConverter<byte>(KType.ByteList, new KByteConverter()));
-        // Short
         RegisterDefaultConverter<short[]>(KType.ShortList, new KArrayConverter<short>(KType.ShortList, new KShortConverter<short>()));
-        // Int
         RegisterDefaultConverter<int[]>(KType.IntList, new KArrayConverter<int>(KType.IntList, new KIntConverter<int>()));
-        // Long
         RegisterDefaultConverter<long[]>(KType.LongList, new KArrayConverter<long>(KType.LongList, new KLongConverter<long>()));
-        // Real
         RegisterDefaultConverter<float[]>(KType.RealList, new KArrayConverter<float>(KType.RealList, new KRealConverter<float>()));
-        // Float
         RegisterDefaultConverter<double[]>(KType.FloatList, new KArrayConverter<double>(KType.FloatList, new KFloatConverter<double>()));
-        // Char
-        RegisterDefaultConverter<char[]>(KType.CharList, new KArrayConverter<char>(KType.CharList, new KCharConverter<char>()));
-        // Symbol
+        RegisterDefaultConverter<char[]>(KType.CharList, new CharArrayConverter());
         RegisterDefaultConverter<string[]>(KType.SymbolList, new KArrayConverter<string>(KType.SymbolList, new KSymbolConverter()));
-        // Timestamp
         RegisterDefaultConverter<DateTime[]>(KType.TimestampList, new KArrayConverter<DateTime>(KType.TimestampList, new KDateTimeConverter<DateTime>()));
-        // Month
         RegisterDefaultConverter<DateTime[]>(KType.MonthList, new KArrayConverter<DateTime>(KType.MonthList, new KMonthConverter<DateTime>()));
-        // Date
         RegisterDefaultConverter<DateTime[]>(KType.DateList, new KArrayConverter<DateTime>(KType.DateList, new KDateConverter<DateTime>()));
-        // DateTime
         RegisterDefaultConverter<DateTime[]>(KType.DateTimeList, new KArrayConverter<DateTime>(KType.DateTimeList, new KDateTimeConverter<DateTime>()));
-        // TimeSpan
         RegisterDefaultConverter<TimeSpan[]>(KType.TimeSpanList, new KArrayConverter<TimeSpan>(KType.TimeSpanList, new KTimeSpanConverter<TimeSpan>()));
-        // Minute
         RegisterDefaultConverter<TimeSpan[]>(KType.MinuteList, new KArrayConverter<TimeSpan>(KType.MinuteList, new KMinuteConverter<TimeSpan>()));
-        // Second
         RegisterDefaultConverter<TimeSpan[]>(KType.SecondList, new KArrayConverter<TimeSpan>(KType.SecondList, new KSecondConverter<TimeSpan>()));
-        // Time
         RegisterDefaultConverter<TimeSpan[]>(KType.TimeList, new KArrayConverter<TimeSpan>(KType.TimeList, new KTimeConverter<TimeSpan>()));
-
     }
     public void RegisterBuildInConverters()
     {
-        // 18 atom converters
         RegisterConverter(new KBooleanConverter());
         RegisterConverter(new KGuidConverter());
         RegisterConverter(new KByteConverter());
@@ -139,6 +106,7 @@ public partial class KSerializerOptions
         RegisterConverter(new KTableConverter());
         RegisterConverter(new KUnitConverter());
         RegisterConverter(new KdbExceptionConverter());
+        RegisterConverter(new CharArrayConverter()); // Conversion between .NET char array and KDB char list is not element by element.
         RegisterConverter(new KAtomListConverterFactory());
 
         RegisterConverter(new StringConverter());
