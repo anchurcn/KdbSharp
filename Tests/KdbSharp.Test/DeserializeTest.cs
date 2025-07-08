@@ -16,6 +16,23 @@ public class DeserializeTest
 {
     private static readonly TestDataReader _testDataReader = new();
 
+    // 基础类型数组
+    private static readonly short[] ExpectedShortArray = [0, short.MinValue, short.MaxValue, (short)-short.MaxValue, (short)32766, (short)-32766];
+    private static readonly int[] ExpectedIntArray = [0, int.MinValue, int.MaxValue, -int.MaxValue, 2147483646, -2147483646];
+    private static readonly long[] ExpectedLongArray = [0L, long.MinValue, long.MaxValue, -long.MaxValue, 9223372036854775806L, -9223372036854775806L];
+    private static readonly float[] ExpectedFloatArray = [0f, float.NaN, float.PositiveInfinity, float.NegativeInfinity, 114514.1919810f, -114514.1919810f];
+    private static readonly double[] ExpectedDoubleArray = [0.0, double.NaN, double.PositiveInfinity, double.NegativeInfinity, 114514.1919810, -114514.1919810];
+
+    // 日期时间类型数组（由基础类型数组生成）
+    private static readonly KTimestamp[] ExpectedTimestampArray = ExpectedLongArray.Select(x => new KTimestamp(x)).ToArray();
+    private static readonly KMonth[] ExpectedMonthArray = ExpectedIntArray.Select(x => new KMonth(x)).ToArray();
+    private static readonly KDate[] ExpectedDateArray = ExpectedIntArray.Select(x => new KDate(x)).ToArray();
+    private static readonly KDateTime[] ExpectedDateTimeArray = ExpectedDoubleArray.Select(x => new KDateTime(x)).ToArray();
+    private static readonly KTimeSpan[] ExpectedTimeSpanArray = ExpectedLongArray.Select(x => new KTimeSpan(x)).ToArray();
+    private static readonly KMinute[] ExpectedMinuteArray = ExpectedIntArray.Select(x => new KMinute(x)).ToArray();
+    private static readonly KSecond[] ExpectedSecondArray = ExpectedIntArray.Select(x => new KSecond(x)).ToArray();
+    private static readonly KTime[] ExpectedTimeArray = ExpectedIntArray.Select(x => new KTime(x)).ToArray();
+
     [Fact]
     public void Test_boolean()
     {
@@ -89,7 +106,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<short[]>(ref reader);
-        Assert.Equal(new short[] { 0, short.MinValue, short.MaxValue, -short.MaxValue, 32766, -32766 }, result);
+        Assert.Equal(ExpectedShortArray, result);
     }
 
     [Fact]
@@ -102,7 +119,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<int[]>(ref reader);
-        Assert.Equal(new int[] { 0, int.MinValue, int.MaxValue, -int.MaxValue, 2147483646, -2147483646 }, result);
+        Assert.Equal(ExpectedIntArray, result);
     }
 
     [Fact]
@@ -115,7 +132,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<long[]>(ref reader);
-        Assert.Equal(new long[] { 0L, long.MinValue, long.MaxValue, -long.MaxValue, 9223372036854775806L, -9223372036854775806L }, result);
+        Assert.Equal(ExpectedLongArray, result);
     }
 
     [Fact]
@@ -128,7 +145,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<float[]>(ref reader);
-        Assert.Equal(new float[] { 0f, float.NaN, float.PositiveInfinity, float.NegativeInfinity, 114514.1919810f, -114514.1919810f }, result);
+        Assert.Equal(ExpectedFloatArray, result);
     }
 
     [Fact]
@@ -141,7 +158,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<double[]>(ref reader);
-        Assert.Equal(new double[] { 0.0, double.NaN, double.PositiveInfinity, double.NegativeInfinity, 114514.1919810, -114514.1919810 }, result);
+        Assert.Equal(ExpectedDoubleArray, result);
     }
 
     [Fact]
@@ -154,14 +171,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<KTimestamp[]>(ref reader);
-        Assert.Equal(new KTimestamp[] {
-            KTimestamp.Zero,
-            KTimestamp.Null,
-            KTimestamp.Infinity,
-            KTimestamp.NegativeInfinity,
-            KTimestamp.FromDateTime(new DateTime(2024, 12, 31, 23, 59, 59, 999)),
-            KTimestamp.FromDateTime(new DateTime(1975, 1, 1, 0, 0, 0, 1))
-        }, result);
+        Assert.Equal(ExpectedTimestampArray, result);
     }
 
     [Fact]
@@ -174,14 +184,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<KMonth[]>(ref reader);
-        Assert.Equal(new KMonth[] {
-            KMonth.Zero,
-            KMonth.Null,
-            KMonth.Infinity,
-            KMonth.NegativeInfinity,
-            KMonth.FromDateTime(new DateTime(2024, 12, 1)),
-            KMonth.FromDateTime(new DateTime(1975, 1, 1))
-        }, result);
+        Assert.Equal(ExpectedMonthArray, result);
     }
 
     [Fact]
@@ -194,14 +197,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<KDate[]>(ref reader);
-        Assert.Equal(new KDate[] {
-            KDate.Zero,
-            KDate.Null,
-            KDate.Infinity,
-            KDate.NegativeInfinity,
-            KDate.FromDateTime(new DateTime(2024, 12, 31)),
-            KDate.FromDateTime(new DateTime(1975, 1, 1))
-        }, result);
+        Assert.Equal(ExpectedDateArray, result);
     }
 
     [Fact]
@@ -214,14 +210,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<KDateTime[]>(ref reader);
-        Assert.Equal(new KDateTime[] {
-            KDateTime.Zero,
-            KDateTime.Null,
-            KDateTime.Infinity,
-            KDateTime.NegativeInfinity,
-            KDateTime.FromDateTime(new DateTime(2024, 12, 31, 23, 59, 59, 999)),
-            KDateTime.FromDateTime(new DateTime(1975, 1, 1, 0, 0, 0, 1))
-        }, result);
+        Assert.Equal(ExpectedDateTimeArray, result);
     }
 
     [Fact]
@@ -234,14 +223,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<KTimeSpan[]>(ref reader);
-        Assert.Equal(new KTimeSpan[] {
-            KTimeSpan.Zero,
-            KTimeSpan.Null,
-            KTimeSpan.Infinity,
-            KTimeSpan.NegativeInfinity,
-            KTimeSpan.FromTimeSpan(new TimeSpan(23, 59, 59, 999)),
-            KTimeSpan.FromTimeSpan(new TimeSpan(0, 0, 0, 1))
-        }, result);
+        Assert.Equal(ExpectedTimeSpanArray, result);
     }
 
     [Fact]
@@ -254,14 +236,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<KMinute[]>(ref reader);
-        Assert.Equal(new KMinute[] {
-            KMinute.Zero,
-            KMinute.Null,
-            KMinute.Infinity,
-            KMinute.NegativeInfinity,
-            KMinute.FromTimeSpan(new TimeSpan(23, 59, 0)),
-            KMinute.FromTimeSpan(new TimeSpan(0, 1, 0))
-        }, result);
+        Assert.Equal(ExpectedMinuteArray, result);
     }
 
     [Fact]
@@ -274,14 +249,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<KSecond[]>(ref reader);
-        Assert.Equal(new KSecond[] {
-            KSecond.Zero,
-            KSecond.Null,
-            KSecond.Infinity,
-            KSecond.NegativeInfinity,
-            KSecond.FromTimeSpan(new TimeSpan(23, 59, 59)),
-            KSecond.FromTimeSpan(new TimeSpan(0, 0, 1))
-        }, result);
+        Assert.Equal(ExpectedSecondArray, result);
     }
 
     [Fact]
@@ -294,14 +262,7 @@ public class DeserializeTest
 
         var reader = new KSerializationReader(data) { IsLittleEndian = true };
         var result = KSerializer.Deserialize<KTime[]>(ref reader);
-        Assert.Equal(new KTime[] {
-            KTime.Zero,
-            KTime.Null,
-            KTime.Infinity,
-            KTime.NegativeInfinity,
-            KTime.FromTimeSpan(new TimeSpan(23, 59, 59, 999)),
-            KTime.FromTimeSpan(new TimeSpan(0, 0, 0, 1))
-        }, result);
+        Assert.Equal(ExpectedTimeArray, result);
     }
 
     [Fact]
