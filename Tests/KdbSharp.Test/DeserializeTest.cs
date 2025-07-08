@@ -17,11 +17,11 @@ public class DeserializeTest
     private static readonly TestDataReader _testDataReader = new();
 
     // 基础类型数组
-    private static readonly short[] ExpectedShortArray = [0, short.MinValue, short.MaxValue, (short)-short.MaxValue, (short)32766, (short)-32766];
-    private static readonly int[] ExpectedIntArray = [0, int.MinValue, int.MaxValue, -int.MaxValue, 2147483646, -2147483646];
-    private static readonly long[] ExpectedLongArray = [0L, long.MinValue, long.MaxValue, -long.MaxValue, 9223372036854775806L, -9223372036854775806L];
-    private static readonly float[] ExpectedFloatArray = [0f, float.NaN, float.PositiveInfinity, float.NegativeInfinity, 114514.1919810f, -114514.1919810f];
-    private static readonly double[] ExpectedDoubleArray = [0.0, double.NaN, double.PositiveInfinity, double.NegativeInfinity, 114514.1919810, -114514.1919810];
+    private static readonly short[] ExpectedShortArray = new short[] { 0, short.MinValue, short.MaxValue, (short)-short.MaxValue, (short)32766, (short)-32766 };
+    private static readonly int[] ExpectedIntArray = new int[] { 0, int.MinValue, int.MaxValue, -int.MaxValue, 2147483646, -2147483646 };
+    private static readonly long[] ExpectedLongArray = new long[] { 0L, long.MinValue, long.MaxValue, -long.MaxValue, 9223372036854775806L, -9223372036854775806L };
+    private static readonly float[] ExpectedFloatArray = new float[] { 0f, float.NaN, float.PositiveInfinity, float.NegativeInfinity, 114514.1919810f, -114514.1919810f };
+    private static readonly double[] ExpectedDoubleArray = new double[] { 0.0, double.NaN, double.PositiveInfinity, double.NegativeInfinity, 114514.1919810, -114514.1919810 };
 
     // 日期时间类型数组（由基础类型数组生成）
     private static readonly KTimestamp[] ExpectedTimestampArray = ExpectedLongArray.Select(x => new KTimestamp(x)).ToArray();
@@ -864,589 +864,463 @@ public class DeserializeTest
     [Fact]
     public void Test_month_zero()
     {
-        // Test deserialization of alltype.month_zero
         var data = _testDataReader.GetTestData("month_zero");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMonth>(ref reader);
+        Assert.Equal(new KMonth(ExpectedIntArray[0]), result);
     }
 
     [Fact]
     public void Test_month_null()
     {
-        // Test deserialization of alltype.month_null
         var data = _testDataReader.GetTestData("month_null");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMonth>(ref reader);
+        Assert.Equal(new KMonth(ExpectedIntArray[1]), result);
     }
 
     [Fact]
     public void Test_month_inf()
     {
-        // Test deserialization of alltype.month_inf
         var data = _testDataReader.GetTestData("month_inf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMonth>(ref reader);
+        Assert.Equal(new KMonth(ExpectedIntArray[2]), result);
     }
 
     [Fact]
     public void Test_month_ninf()
     {
-        // Test deserialization of alltype.month_ninf
         var data = _testDataReader.GetTestData("month_ninf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMonth>(ref reader);
+        Assert.Equal(new KMonth(ExpectedIntArray[3]), result);
     }
 
     [Fact]
     public void Test_month_max()
     {
-        // Test deserialization of alltype.month_max
         var data = _testDataReader.GetTestData("month_max");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMonth>(ref reader);
+        Assert.Equal(new KMonth(ExpectedIntArray[4]), result);
     }
 
     [Fact]
     public void Test_month_min()
     {
-        // Test deserialization of alltype.month_min
         var data = _testDataReader.GetTestData("month_min");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMonth>(ref reader);
+        Assert.Equal(new KMonth(ExpectedIntArray[5]), result);
     }
 
     [Fact]
     public void Test_date_zero()
     {
-        // Test deserialization of alltype.date_zero
         var data = _testDataReader.GetTestData("date_zero");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDate>(ref reader);
+        Assert.Equal(new KDate(ExpectedIntArray[0]), result);
     }
 
     [Fact]
     public void Test_date_null()
     {
-        // Test deserialization of alltype.date_null
         var data = _testDataReader.GetTestData("date_null");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDate>(ref reader);
+        Assert.Equal(new KDate(ExpectedIntArray[1]), result);
     }
 
     [Fact]
     public void Test_date_inf()
     {
-        // Test deserialization of alltype.date_inf
         var data = _testDataReader.GetTestData("date_inf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDate>(ref reader);
+        Assert.Equal(new KDate(ExpectedIntArray[2]), result);
     }
 
     [Fact]
     public void Test_date_ninf()
     {
-        // Test deserialization of alltype.date_ninf
         var data = _testDataReader.GetTestData("date_ninf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDate>(ref reader);
+        Assert.Equal(new KDate(ExpectedIntArray[3]), result);
     }
 
     [Fact]
     public void Test_date_max()
     {
-        // Test deserialization of alltype.date_max
         var data = _testDataReader.GetTestData("date_max");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDate>(ref reader);
+        Assert.Equal(new KDate(ExpectedIntArray[4]), result);
     }
 
     [Fact]
     public void Test_date_min()
     {
-        // Test deserialization of alltype.date_min
         var data = _testDataReader.GetTestData("date_min");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDate>(ref reader);
+        Assert.Equal(new KDate(ExpectedIntArray[5]), result);
     }
 
     [Fact]
     public void Test_datetime_zero()
     {
-        // Test deserialization of alltype.datetime_zero
         var data = _testDataReader.GetTestData("datetime_zero");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDateTime>(ref reader);
+        Assert.Equal(new KDateTime(ExpectedDoubleArray[0]), result);
     }
 
     [Fact]
     public void Test_datetime_null()
     {
-        // Test deserialization of alltype.datetime_null
         var data = _testDataReader.GetTestData("datetime_null");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDateTime>(ref reader);
+        Assert.Equal(new KDateTime(ExpectedDoubleArray[1]).IsNull, result.IsNull);
     }
 
     [Fact]
     public void Test_datetime_inf()
     {
-        // Test deserialization of alltype.datetime_inf
         var data = _testDataReader.GetTestData("datetime_inf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDateTime>(ref reader);
+        Assert.Equal(new KDateTime(ExpectedDoubleArray[2]), result);
     }
 
     [Fact]
     public void Test_datetime_ninf()
     {
-        // Test deserialization of alltype.datetime_ninf
         var data = _testDataReader.GetTestData("datetime_ninf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDateTime>(ref reader);
+        Assert.Equal(new KDateTime(ExpectedDoubleArray[3]), result);
     }
 
     [Fact]
     public void Test_datetime_max()
     {
-        // Test deserialization of alltype.datetime_max
         var data = _testDataReader.GetTestData("datetime_max");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDateTime>(ref reader);
+        Assert.Equal(new KDateTime(ExpectedDoubleArray[4]), result);
     }
 
     [Fact]
     public void Test_datetime_min()
     {
-        // Test deserialization of alltype.datetime_min
         var data = _testDataReader.GetTestData("datetime_min");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KDateTime>(ref reader);
+        Assert.Equal(new KDateTime(ExpectedDoubleArray[5]), result);
     }
 
     [Fact]
     public void Test_timespan_zero()
     {
-        // Test deserialization of alltype.timespan_zero
         var data = _testDataReader.GetTestData("timespan_zero");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTimeSpan>(ref reader);
+        Assert.Equal(new KTimeSpan(ExpectedLongArray[0]), result);
     }
 
     [Fact]
     public void Test_timespan_null()
     {
-        // Test deserialization of alltype.timespan_null
         var data = _testDataReader.GetTestData("timespan_null");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTimeSpan>(ref reader);
+        Assert.Equal(new KTimeSpan(ExpectedLongArray[1]), result);
     }
 
     [Fact]
     public void Test_timespan_inf()
     {
-        // Test deserialization of alltype.timespan_inf
         var data = _testDataReader.GetTestData("timespan_inf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTimeSpan>(ref reader);
+        Assert.Equal(new KTimeSpan(ExpectedLongArray[2]), result);
     }
 
     [Fact]
     public void Test_timespan_ninf()
     {
-        // Test deserialization of alltype.timespan_ninf
         var data = _testDataReader.GetTestData("timespan_ninf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTimeSpan>(ref reader);
+        Assert.Equal(new KTimeSpan(ExpectedLongArray[3]), result);
     }
 
     [Fact]
     public void Test_timespan_max()
     {
-        // Test deserialization of alltype.timespan_max
         var data = _testDataReader.GetTestData("timespan_max");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTimeSpan>(ref reader);
+        Assert.Equal(new KTimeSpan(ExpectedLongArray[4]), result);
     }
 
     [Fact]
     public void Test_timespan_min()
     {
-        // Test deserialization of alltype.timespan_min
         var data = _testDataReader.GetTestData("timespan_min");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTimeSpan>(ref reader);
+        Assert.Equal(new KTimeSpan(ExpectedLongArray[5]), result);
     }
 
     [Fact]
     public void Test_minute_zero()
     {
-        // Test deserialization of alltype.minute_zero
         var data = _testDataReader.GetTestData("minute_zero");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMinute>(ref reader);
+        Assert.Equal(new KMinute(ExpectedIntArray[0]), result);
     }
 
     [Fact]
     public void Test_minute_null()
     {
-        // Test deserialization of alltype.minute_null
         var data = _testDataReader.GetTestData("minute_null");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMinute>(ref reader);
+        Assert.Equal(new KMinute(ExpectedIntArray[1]), result);
     }
 
     [Fact]
     public void Test_minute_inf()
     {
-        // Test deserialization of alltype.minute_inf
         var data = _testDataReader.GetTestData("minute_inf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMinute>(ref reader);
+        Assert.Equal(new KMinute(ExpectedIntArray[2]), result);
     }
 
     [Fact]
     public void Test_minute_ninf()
     {
-        // Test deserialization of alltype.minute_ninf
         var data = _testDataReader.GetTestData("minute_ninf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMinute>(ref reader);
+        Assert.Equal(new KMinute(ExpectedIntArray[3]), result);
     }
 
     [Fact]
     public void Test_minute_max()
     {
-        // Test deserialization of alltype.minute_max
         var data = _testDataReader.GetTestData("minute_max");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMinute>(ref reader);
+        Assert.Equal(new KMinute(ExpectedIntArray[4]), result);
     }
 
     [Fact]
     public void Test_minute_min()
     {
-        // Test deserialization of alltype.minute_min
         var data = _testDataReader.GetTestData("minute_min");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KMinute>(ref reader);
+        Assert.Equal(new KMinute(ExpectedIntArray[5]), result);
     }
 
     [Fact]
     public void Test_second_zero()
     {
-        // Test deserialization of alltype.second_zero
         var data = _testDataReader.GetTestData("second_zero");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KSecond>(ref reader);
+        Assert.Equal(new KSecond(ExpectedIntArray[0]), result);
     }
 
     [Fact]
     public void Test_second_null()
     {
-        // Test deserialization of alltype.second_null
         var data = _testDataReader.GetTestData("second_null");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KSecond>(ref reader);
+        Assert.Equal(new KSecond(ExpectedIntArray[1]), result);
     }
 
     [Fact]
     public void Test_second_inf()
     {
-        // Test deserialization of alltype.second_inf
         var data = _testDataReader.GetTestData("second_inf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KSecond>(ref reader);
+        Assert.Equal(new KSecond(ExpectedIntArray[2]), result);
     }
 
     [Fact]
     public void Test_second_ninf()
     {
-        // Test deserialization of alltype.second_ninf
         var data = _testDataReader.GetTestData("second_ninf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KSecond>(ref reader);
+        Assert.Equal(new KSecond(ExpectedIntArray[3]), result);
     }
 
     [Fact]
     public void Test_second_max()
     {
-        // Test deserialization of alltype.second_max
         var data = _testDataReader.GetTestData("second_max");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KSecond>(ref reader);
+        Assert.Equal(new KSecond(ExpectedIntArray[4]), result);
     }
 
     [Fact]
     public void Test_second_min()
     {
-        // Test deserialization of alltype.second_min
         var data = _testDataReader.GetTestData("second_min");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KSecond>(ref reader);
+        Assert.Equal(new KSecond(ExpectedIntArray[5]), result);
     }
 
     [Fact]
     public void Test_time_zero()
     {
-        // Test deserialization of alltype.time_zero
         var data = _testDataReader.GetTestData("time_zero");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTime>(ref reader);
+        Assert.Equal(new KTime(ExpectedIntArray[0]), result);
     }
 
     [Fact]
     public void Test_time_null()
     {
-        // Test deserialization of alltype.time_null
         var data = _testDataReader.GetTestData("time_null");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTime>(ref reader);
+        Assert.Equal(new KTime(ExpectedIntArray[1]), result);
     }
 
     [Fact]
     public void Test_time_inf()
     {
-        // Test deserialization of alltype.time_inf
         var data = _testDataReader.GetTestData("time_inf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTime>(ref reader);
+        Assert.Equal(new KTime(ExpectedIntArray[2]), result);
     }
 
     [Fact]
     public void Test_time_ninf()
     {
-        // Test deserialization of alltype.time_ninf
         var data = _testDataReader.GetTestData("time_ninf");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTime>(ref reader);
+        Assert.Equal(new KTime(ExpectedIntArray[3]), result);
     }
 
     [Fact]
     public void Test_time_max()
     {
-        // Test deserialization of alltype.time_max
         var data = _testDataReader.GetTestData("time_max");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTime>(ref reader);
+        Assert.Equal(new KTime(ExpectedIntArray[4]), result);
     }
 
     [Fact]
     public void Test_time_min()
     {
-        // Test deserialization of alltype.time_min
         var data = _testDataReader.GetTestData("time_min");
         Assert.NotNull(data);
         Assert.NotEmpty(data);
-
-        // TODO: Add specific deserialization and validation logic
-        // var reader = new KSerializationReader(data);
-        // var result = reader.ReadXXX();
-        // Assert.Equal(expectedValue, result);
+        var reader = new KSerializationReader(data) { IsLittleEndian = true };
+        var result = KSerializer.Deserialize<KTime>(ref reader);
+        Assert.Equal(new KTime(ExpectedIntArray[5]), result);
     }
 
 }
