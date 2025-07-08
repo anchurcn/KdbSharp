@@ -9,8 +9,8 @@ alltype.symbol: (`; `a);
 
 // numeric types testing values (zero, null, infinity, -infinity, max, min)
 
-alltype.short: (0h; 0Nh; 0Wh; -0Wh; 32766h; -32766);
-alltype.int: (0i; 0Ni; 0Wi; -0Wi; 2147483646; -2147483646);
+alltype.short: (0h; 0Nh; 0Wh; -0Wh; 32766h; -32766h);
+alltype.int: (0i; 0Ni; 0Wi; -0Wi; 2147483646i; -2147483646i);
 alltype.long: (0j; 0Nj; 0Wj; -0Wj; 9223372036854775806; -9223372036854775806);
 alltype.real: (0e; 0Ne; 0We; -0We; 114514.1919810e; -114514.1919810e);
 alltype.float: (0f; 0Nf; 0Wf; -0Wf; 114514.1919810f; -114514.1919810f);

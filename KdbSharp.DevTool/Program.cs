@@ -36,7 +36,7 @@ static async Task GenerateTestDataAsync()
     const int port = 5000;
 
     // Output to test project directory
-    const string testProjectDir = "../../../../Tests/KdbSharp.Tests";
+    const string testProjectDir = "../../../../Tests/KdbSharp.Test";
     var outputFile = Path.Combine(testProjectDir, "alltype.txt");
     var testFile = Path.Combine(testProjectDir, "DeserializeTest.cs");
 
