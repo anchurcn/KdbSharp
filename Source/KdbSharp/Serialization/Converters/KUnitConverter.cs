@@ -27,7 +27,7 @@ public class KUnitConverter : KTypeConverter<KUnit>
 
     public override KUnit Read(ref KSerializationReader reader, KSerializerOptions options)
     {
-        if (reader.ReadByte() != 0)
+        if (reader.ReadUnaryPrimitive() != UnaryPrimitive.Unit)
         {
             throw new InvalidOperationException("Invalid unit type");
         }
@@ -36,8 +36,6 @@ public class KUnitConverter : KTypeConverter<KUnit>
 
     public override void Write(ref KSerializationWriter writer, KUnit value, KSerializerOptions options)
     {
-        writer.BeginWriteType(KType.UnaryPrimitive);
-        writer.WriteByte(0);
-        writer.EndWriteType();
+        writer.WriteUnaryPrimitive(UnaryPrimitive.Unit);
     }
 }

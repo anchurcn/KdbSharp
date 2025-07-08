@@ -89,7 +89,7 @@ public partial class KSerializerOptions
         // Float
         RegisterDefaultConverter<double[]>(KType.FloatList, new KArrayConverter<double>(KType.FloatList, new KFloatConverter<double>()));
         // Char
-        RegisterDefaultConverter<char[]>(KType.CharList, new KArrayConverter<char>(KType.CharList, new KCharConverter<char>()));
+        RegisterDefaultConverter<char[]>(KType.CharList, new CharArrayConverter());
         // Symbol
         RegisterDefaultConverter<string[]>(KType.SymbolList, new KArrayConverter<string>(KType.SymbolList, new KSymbolConverter()));
         // Timestamp
@@ -139,6 +139,7 @@ public partial class KSerializerOptions
         RegisterConverter(new KTableConverter());
         RegisterConverter(new KUnitConverter());
         RegisterConverter(new KdbExceptionConverter());
+        RegisterConverter(new CharArrayConverter()); // Conversion between .NET char array and KDB char list is not element by element.
         RegisterConverter(new KAtomListConverterFactory());
 
         RegisterConverter(new StringConverter());

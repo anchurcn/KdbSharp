@@ -18,6 +18,8 @@ public static class TemporalHelper
 {
     public static DateTime MillenniumY2K { get; } = new DateTime(2000, 1, 1);
     public static TimeSpan Midnight { get; } = default;
+    public static TimeSpan MaxMillenniumY2KRange { get; } = DateTime.MaxValue - MillenniumY2K;
+    public static TimeSpan MinMillenniumY2KRange { get; } = DateTime.MinValue - MillenniumY2K;
 }
 public readonly struct KTimestamp : IEquatable<KTimestamp>, IComparable<KTimestamp>, IComparable, INullable
 {
