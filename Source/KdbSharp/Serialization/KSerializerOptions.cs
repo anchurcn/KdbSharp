@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -77,6 +78,8 @@ public partial class KSerializerOptions
         RegisterDefaultConverter<TimeSpan[]>(KType.MinuteList, new KArrayConverter<TimeSpan>(KType.MinuteList, new KMinuteConverter<TimeSpan>()));
         RegisterDefaultConverter<TimeSpan[]>(KType.SecondList, new KArrayConverter<TimeSpan>(KType.SecondList, new KSecondConverter<TimeSpan>()));
         RegisterDefaultConverter<TimeSpan[]>(KType.TimeList, new KArrayConverter<TimeSpan>(KType.TimeList, new KTimeConverter<TimeSpan>()));
+        RegisterDefaultWriteConverter(t => typeof(ITuple).IsAssignableFrom(t), new ValueTupleConverterFactory());
+
     }
     public void RegisterBuildInConverters()
     {
@@ -212,6 +215,10 @@ public partial class KSerializerOptions
         {
             if (canConvert(type))
             {
+                if (converter is KTypeConverterFactory factory)
+                {
+                    return factory.GetConverter(type, null, this);
+                }
                 return converter;
             }
         }
@@ -223,6 +230,11 @@ public partial class KSerializerOptions
         {
             if (canConvert(type))
             {
+                if (converter is KTypeConverterFactory factory)
+                {
+                    return factory.GetConverter(null!, type, this);
+                }
+
                 return converter;
             }
         }

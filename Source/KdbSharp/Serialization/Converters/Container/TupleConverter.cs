@@ -29,17 +29,19 @@ public class ValueTupleConverter<T> : KTypeConverter<T> where T : ITuple
 
     public override T Read(ref KSerializationReader reader, KSerializerOptions options)
     {
+        reader.StartReadList();
         var len = reader.ListLength ?? throw new KSerializationException("Array length is null.");
-        var res = (ITuple)default(T)!;
-        var fields = typeof(T).GetFields();
+        var array = new object?[len];
+
         for (int i = 0; i < len; i++)
         {
-            var field = fields[i];
-            var elemTypeInfo = options.GetTypeInfo(field.FieldType);
-            var elem = elemTypeInfo.DeserializeAsObject(ref reader)!;
-            fields[i].SetValue(res, elem);
+            array[i] = KSerializer.Deserialize<object>(ref reader, options);
         }
-        return (T)res;
+        reader.EndReadList();
+
+        // Create ValueTuple using reflection
+        var tuple = (T)Activator.CreateInstance(typeof(T), array)!;
+        return tuple;
     }
 
     public override void Write(ref KSerializationWriter writer, T value, KSerializerOptions options)
@@ -48,10 +50,8 @@ public class ValueTupleConverter<T> : KTypeConverter<T> where T : ITuple
         var fields = typeof(T).GetFields();
         for (int i = 0; i < value.Length; i++)
         {
-            var field = fields[i];
-            var elem = value[i];
-            var elemTypeInfo = options.GetTypeInfo(field.FieldType);
-            elemTypeInfo.SerializeAsObject(ref writer, elem);
+            var item = value[i];
+            KSerializer.Serialize(ref writer, item, fields[i].FieldType, options);
         }
         writer.EndWriteList();
     }
