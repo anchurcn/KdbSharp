@@ -20,6 +20,14 @@ public static class TemporalHelper
     public static TimeSpan Midnight { get; } = default;
     public static TimeSpan MaxMillenniumY2KRange { get; } = DateTime.MaxValue - MillenniumY2K;
     public static TimeSpan MinMillenniumY2KRange { get; } = DateTime.MinValue - MillenniumY2K;
+
+    // DateTime.AddMonths() limits: months value must be between +/-120000
+    public static int MaxMonthsRange { get; } = 120000;
+    public static int MinMonthsRange { get; } = -120000;
+
+    // DateTime.AddDays() limits: calculated from DateTime min/max values
+    public static double MaxDaysRange { get; } = MaxMillenniumY2KRange.TotalDays;
+    public static double MinDaysRange { get; } = MinMillenniumY2KRange.TotalDays;
 }
 public readonly struct KTimestamp : IEquatable<KTimestamp>, IComparable<KTimestamp>, IComparable, INullable
 {
@@ -142,7 +150,17 @@ public readonly struct KTimestamp : IEquatable<KTimestamp>, IComparable<KTimesta
 
     public DateTime ToDateTime()
     {
-        return TemporalHelper.MillenniumY2K.AddTicks(_value / 100);
+        // Clamp ticks to valid range
+        var ticks = _value / 100;
+        var maxTicks = TemporalHelper.MaxMillenniumY2KRange.Ticks;
+        var minTicks = TemporalHelper.MinMillenniumY2KRange.Ticks;
+
+        if (ticks > maxTicks)
+            ticks = maxTicks;
+        else if (ticks < minTicks)
+            ticks = minTicks;
+
+        return TemporalHelper.MillenniumY2K.AddTicks(ticks);
     }
 
     public static KTimestamp FromDateTime(DateTime dt)
@@ -239,7 +257,19 @@ public readonly struct KMonth : IEquatable<KMonth>, IComparable<KMonth>, ICompar
 
     public DateTime ToDateTime()
     {
-        return TemporalHelper.MillenniumY2K.AddMonths(_value);
+        var maxSafeMonths = (DateTime.MaxValue.Year - TemporalHelper.MillenniumY2K.Year) * 12 +
+                           (DateTime.MaxValue.Month - TemporalHelper.MillenniumY2K.Month);
+        var minSafeMonths = (DateTime.MinValue.Year - TemporalHelper.MillenniumY2K.Year) * 12 +
+                           (DateTime.MinValue.Month - TemporalHelper.MillenniumY2K.Month);
+
+        // Clamp months to safe range
+        var months = _value;
+        if (months > maxSafeMonths)
+            months = maxSafeMonths;
+        else if (months < minSafeMonths)
+            months = minSafeMonths;
+
+        return TemporalHelper.MillenniumY2K.AddMonths(months);
     }
 
     public static KMonth FromDateTime(DateTime dt)
@@ -335,7 +365,14 @@ public readonly struct KDate : IEquatable<KDate>, IComparable<KDate>, IComparabl
 
     public DateTime ToDateTime()
     {
-        return TemporalHelper.MillenniumY2K.AddDays(_value);
+        // Clamp days to valid range for DateTime.AddDays()
+        var days = _value;
+        if (days > TemporalHelper.MaxDaysRange)
+            return DateTime.MaxValue;
+        else if (days < TemporalHelper.MinDaysRange)
+            return DateTime.MinValue;
+
+        return TemporalHelper.MillenniumY2K.AddDays(days);
     }
 
     public static KDate FromDateTime(DateTime dt)
@@ -435,7 +472,14 @@ public readonly struct KDateTime : IEquatable<KDateTime>, IComparable<KDateTime>
 
     public DateTime ToDateTime()
     {
-        return TemporalHelper.MillenniumY2K.AddDays(_value);
+        // Clamp days to valid range for DateTime.AddDays()
+        var days = _value;
+        if (days > TemporalHelper.MaxDaysRange)
+            return DateTime.MaxValue;
+        else if (days < TemporalHelper.MinDaysRange)
+            return DateTime.MinValue;
+
+        return TemporalHelper.MillenniumY2K.AddDays(days);
     }
 
     public static KDateTime FromDateTime(DateTime dt)
