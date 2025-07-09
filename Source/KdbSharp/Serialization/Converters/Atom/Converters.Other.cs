@@ -122,11 +122,12 @@ public class KCharConverter<T> : KTypeConverter<T>
     {
         if (TypeToReadBack == typeof(char))
         {
-            if ((char)(object)value! > 255)
+            var charValue = (char)(object)value;
+            if (charValue > 255)
             {
                 throw new ArgumentOutOfRangeException(nameof(value), "Char value must be less than 256.");
             }
-            writer.WriteChar(new KChar((sbyte)(object)value!));
+            writer.WriteChar(new KChar((sbyte)(object)charValue));
         }
         else if (TypeToReadBack == typeof(KChar))
         {
