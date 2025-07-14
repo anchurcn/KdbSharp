@@ -80,6 +80,22 @@ public partial class KSerializerOptions
         RegisterDefaultConverter<TimeSpan[]>(KType.TimeList, new KArrayConverter<TimeSpan>(KType.TimeList, new KTimeConverter<TimeSpan>()));
         RegisterDefaultWriteConverter(t => typeof(ITuple).IsAssignableFrom(t), new ValueTupleConverterFactory());
 
+        // K wrapper types write converters
+        RegisterDefaultWriteConverter(t => t == typeof(KShort), new KShortConverter<KShort>());
+        RegisterDefaultWriteConverter(t => t == typeof(KInt), new KIntConverter<KInt>());
+        RegisterDefaultWriteConverter(t => t == typeof(KLong), new KLongConverter<KLong>());
+        RegisterDefaultWriteConverter(t => t == typeof(KReal), new KRealConverter<KReal>());
+        RegisterDefaultWriteConverter(t => t == typeof(KFloat), new KFloatConverter<KFloat>());
+        RegisterDefaultWriteConverter(t => t == typeof(KChar), new KCharConverter<KChar>());
+        RegisterDefaultWriteConverter(t => t == typeof(KTimestamp), new KTimestampConverter<KTimestamp>());
+        RegisterDefaultWriteConverter(t => t == typeof(KMonth), new KMonthConverter<KMonth>());
+        RegisterDefaultWriteConverter(t => t == typeof(KDate), new KDateConverter<KDate>());
+        RegisterDefaultWriteConverter(t => t == typeof(KDateTime), new KDateTimeConverter<KDateTime>());
+        RegisterDefaultWriteConverter(t => t == typeof(KTimeSpan), new KTimeSpanConverter<KTimeSpan>());
+        RegisterDefaultWriteConverter(t => t == typeof(KMinute), new KMinuteConverter<KMinute>());
+        RegisterDefaultWriteConverter(t => t == typeof(KSecond), new KSecondConverter<KSecond>());
+        RegisterDefaultWriteConverter(t => t == typeof(KTime), new KTimeConverter<KTime>());
+
     }
     public void RegisterBuildInConverters()
     {
