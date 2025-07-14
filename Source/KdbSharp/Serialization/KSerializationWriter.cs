@@ -92,9 +92,9 @@ public struct KSerializationWriter
         return true;
     }
 
-    public void BeginWriteType(KType type)
+    public bool BeginWriteType(KType type)
     {
-        TryWriteTypeStamp(type);
+        return TryWriteTypeStamp(type);
     }
 
     public void EndWriteType()
@@ -155,9 +155,10 @@ public struct KSerializationWriter
     /// <param name="value">The boolean value to write.</param>
     public void WriteBoolean(bool value)
     {
-        BeginWriteType(KType.Boolean);
+        var needPop = BeginWriteType(KType.Boolean);
         _writer.WriteBool(value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -166,7 +167,7 @@ public struct KSerializationWriter
     /// <param name="value">The GUID value to write.</param>
     public void WriteGuid(Guid value)
     {
-        BeginWriteType(KType.Guid);
+        var needPop = BeginWriteType(KType.Guid);
         if (BitConverter.IsLittleEndian)
         {
             SerializationHelper.FlipGuidTop3Parts(ref value);
@@ -174,7 +175,8 @@ public struct KSerializationWriter
 
         var span = value.AsSpan();
         _writer.WriteBytes(span);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -183,9 +185,10 @@ public struct KSerializationWriter
     /// <param name="value">The byte value to write.</param>
     public void WriteByte(byte value)
     {
-        BeginWriteType(KType.Byte);
+        var needPop = BeginWriteType(KType.Byte);
         _writer.WriteByte(value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -194,9 +197,10 @@ public struct KSerializationWriter
     /// <param name="value">The KShort value to write.</param>
     public void WriteShort(KShort value)
     {
-        BeginWriteType(KType.Short);
+        var needPop = BeginWriteType(KType.Short);
         _writer.WriteInt16(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -205,9 +209,10 @@ public struct KSerializationWriter
     /// <param name="value">The KInt value to write.</param>
     public void WriteInt(KInt value)
     {
-        BeginWriteType(KType.Int);
+        var needPop = BeginWriteType(KType.Int);
         _writer.WriteInt32(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -216,9 +221,10 @@ public struct KSerializationWriter
     /// <param name="value">The KLong value to write.</param>
     public void WriteLong(KLong value)
     {
-        BeginWriteType(KType.Long);
+        var needPop = BeginWriteType(KType.Long);
         _writer.WriteInt64(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -227,9 +233,10 @@ public struct KSerializationWriter
     /// <param name="value">The KReal value to write.</param>
     public void WriteReal(KReal value)
     {
-        BeginWriteType(KType.Real);
+        var needPop = BeginWriteType(KType.Real);
         _writer.WriteSingle(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -238,9 +245,10 @@ public struct KSerializationWriter
     /// <param name="value">The KFloat value to write.</param>
     public void WriteFloat(KFloat value)
     {
-        BeginWriteType(KType.Float);
+        var needPop = BeginWriteType(KType.Float);
         _writer.WriteDouble(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -249,9 +257,10 @@ public struct KSerializationWriter
     /// <param name="value">The KChar value to write.</param>
     public void WriteChar(KChar value)
     {
-        BeginWriteType(KType.Char);
+        var needPop = BeginWriteType(KType.Char);
         _writer.WriteByte((byte)value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -261,9 +270,10 @@ public struct KSerializationWriter
     /// <param name="encoding">The encoding to use.</param>
     public void WriteSymbol(ReadOnlySpan<char> value, Encoding? encoding = null)
     {
-        BeginWriteType(KType.Symbol);
+        var needPop = BeginWriteType(KType.Symbol);
         _writer.WriteNullTerminatedString(value, encoding ?? TextEncoding);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -272,9 +282,10 @@ public struct KSerializationWriter
     /// <param name="value">The KTimestamp value to write.</param>
     public void WriteTimestamp(KTimestamp value)
     {
-        BeginWriteType(KType.Timestamp);
+        var needPop = BeginWriteType(KType.Timestamp);
         _writer.WriteInt64(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -283,9 +294,10 @@ public struct KSerializationWriter
     /// <param name="value">The KMonth value to write.</param>
     public void WriteMonth(KMonth value)
     {
-        BeginWriteType(KType.Month);
+        var needPop = BeginWriteType(KType.Month);
         _writer.WriteInt32(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -294,9 +306,10 @@ public struct KSerializationWriter
     /// <param name="value">The KDate value to write.</param>
     public void WriteDate(KDate value)
     {
-        BeginWriteType(KType.Date);
+        var needPop = BeginWriteType(KType.Date);
         _writer.WriteInt32(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -305,9 +318,10 @@ public struct KSerializationWriter
     /// <param name="value">The KDateTime value to write.</param>
     public void WriteDateTime(KDateTime value)
     {
-        BeginWriteType(KType.DateTime);
+        var needPop = BeginWriteType(KType.DateTime);
         _writer.WriteDouble(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -316,9 +330,10 @@ public struct KSerializationWriter
     /// <param name="value">The KTimeSpan value to write.</param>
     public void WriteTimeSpan(KTimeSpan value)
     {
-        BeginWriteType(KType.TimeSpan);
+        var needPop = BeginWriteType(KType.TimeSpan);
         _writer.WriteInt64(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -327,9 +342,10 @@ public struct KSerializationWriter
     /// <param name="value">The KMinute value to write.</param>
     public void WriteMinute(KMinute value)
     {
-        BeginWriteType(KType.Minute);
+        var needPop = BeginWriteType(KType.Minute);
         _writer.WriteInt32(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -338,9 +354,10 @@ public struct KSerializationWriter
     /// <param name="value">The KSecond value to write.</param>
     public void WriteSecond(KSecond value)
     {
-        BeginWriteType(KType.Second);
+        var needPop = BeginWriteType(KType.Second);
         _writer.WriteInt32(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
@@ -349,9 +366,10 @@ public struct KSerializationWriter
     /// <param name="value">The KTime value to write.</param>
     public void WriteTime(KTime value)
     {
-        BeginWriteType(KType.Time);
+        var needPop = BeginWriteType(KType.Time);
         _writer.WriteInt32(value.Value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     #endregion
@@ -460,9 +478,10 @@ public struct KSerializationWriter
     /// <param name="value">The unary primitive value to write.</param>
     public void WriteUnaryPrimitive(UnaryPrimitive value)
     {
-        BeginWriteType(KType.UnaryPrimitive);
+        var needPop = BeginWriteType(KType.UnaryPrimitive);
         _writer.WriteByte((byte)value);
-        EndWriteType();
+        if (needPop)
+            EndWriteType();
     }
 
     /// <summary>
