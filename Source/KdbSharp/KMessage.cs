@@ -122,16 +122,22 @@ public class KMessage : IDisposable
     {
         if (!Compressed)
         {
-            throw new InvalidOperationException("Not compressed.");
+            throw new InvalidOperationException("Cannot uncompress a non-compressed message.");
         }
-        throw new NotImplementedException();
+        var newSize = UncompressedSize.GetValueOrDefault();
+        var owner = MemoryPool<byte>.Shared.Rent(newSize);
+        var memory = owner.Memory[..newSize];
+        Uncompress(_bodyMemory.Span, memory.Span);
+        _bodyOwner?.Dispose();
+        _bodyOwner = owner;
+        _bodyMemory = memory;
     }
 
     public static KMessage Uncompress(KMessage message)
     {
         if (!message.Compressed)
         {
-            throw new InvalidOperationException("Not compressed.");
+            throw new InvalidOperationException("Cannot uncompress a non-compressed message.");
         }
         var result = Alloc(message.Type, message.HeaderMeta.Endianess, false, message.UncompressedSize!.Value);
         Uncompress(message.Body.Span[4..], result.Body.Span);
