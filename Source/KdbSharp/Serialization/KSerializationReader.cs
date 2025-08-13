@@ -117,13 +117,13 @@ public ref struct KSerializationReader
     /// Initializes a new instance of the KSerializationReader struct.
     /// </summary>
     /// <param name="memory">The buffer to read from.</param>
-    public KSerializationReader(ReadOnlyMemory<byte> memory)
+    public KSerializationReader(ReadOnlyMemory<byte> memory, bool isLittleEndian = true)
     {
         _reader = new SequenceReader<byte>(memory);
         _stack = new Stack<ReadStackFrame>();
         TextEncoding = Encoding.UTF8;
         CancellationToken = default;
-        IsLittleEndian = false;
+        IsLittleEndian = isLittleEndian;
     }
 
     public ReadStackFrame GetCurrentFrame()
