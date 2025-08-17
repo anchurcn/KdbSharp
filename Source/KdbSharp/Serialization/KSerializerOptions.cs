@@ -96,6 +96,12 @@ public partial class KSerializerOptions
         RegisterDefaultWriteConverter(t => t == typeof(KSecond), new KSecondConverter<KSecond>());
         RegisterDefaultWriteConverter(t => t == typeof(KTime), new KTimeConverter<KTime>());
 
+        // Function types write converters
+        RegisterDefaultWriteConverter(t => t == typeof(KLambda), new KLambdaConverter());
+        RegisterDefaultWriteConverter(t => t == typeof(KProjection), new KProjectionConverter());
+        RegisterDefaultWriteConverter(t => t == typeof(KComposition), new KCompositionConverter());
+        RegisterDefaultWriteConverter(t => typeof(KFunction).IsAssignableFrom(t), new KFunctionConverterFactory());
+
     }
     public void RegisterBuildInConverters()
     {
@@ -127,6 +133,12 @@ public partial class KSerializerOptions
         RegisterConverter(new KdbExceptionConverter());
         RegisterConverter(new CharArrayConverter()); // Conversion between .NET char array and KDB char list is not element by element.
         RegisterConverter(new KAtomListConverterFactory());
+
+        // Function type converters
+        RegisterConverter(new KLambdaConverter());
+        RegisterConverter(new KProjectionConverter());
+        RegisterConverter(new KCompositionConverter());
+        RegisterConverter(new KFunctionConverterFactory());
 
         RegisterConverter(new StringConverter());
         RegisterConverter(new ValueTupleConverterFactory());
