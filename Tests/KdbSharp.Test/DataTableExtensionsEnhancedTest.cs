@@ -14,6 +14,7 @@
 */
 
 using System.Data;
+using System.Text.Json;
 using KdbSharp.Extensions;
 using KdbSharp.Types;
 using Xunit;
@@ -225,5 +226,167 @@ public class DataTableExtensionsEnhancedTest
         // Assert
         Assert.Equal(typeof(int[]), dataTable.Columns["Key"].ExtendedProperties["OriginalType"]);
         Assert.Equal(typeof(string[]), dataTable.Columns["Value"].ExtendedProperties["OriginalType"]);
+    }
+
+    [Fact]
+    public void ToDataTable_KSimpleDictionary_WithArrayValues_ForDisplay_SerializesToJson()
+    {
+        // Arrange
+        var keys = new[] { "array1", "array2" };
+        var values = new[] { new[] { 1, 2, 3 }, new[] { 4, 5, 6 } };
+        var dict = new KSimpleDictionary(keys, values);
+
+        // Act
+        var result = dict.ToDataTable("TestTable", DataTableConversionOptions.ForDisplayPurpose);
+
+        // Assert
+        Assert.Equal("TestTable", result.TableName);
+        Assert.Equal(typeof(string), result.Columns["Key"].DataType);
+        Assert.Equal(typeof(string), result.Columns["Value"].DataType); // Array converted to string
+
+        Assert.Equal(2, result.Rows.Count);
+        Assert.Equal("array1", result.Rows[0]["Key"]);
+        Assert.Equal("[1,2,3]", result.Rows[0]["Value"]);
+        Assert.Equal("array2", result.Rows[1]["Key"]);
+        Assert.Equal("[4,5,6]", result.Rows[1]["Value"]);
+    }
+
+    [Fact]
+    public void ToDataTable_KTable_WithArrayColumns_ForDisplay_SerializesToJson()
+    {
+        // Arrange
+        var columns = new[]
+        {
+            new KTable.Column(KType.CharList, "name"),
+            new KTable.Column(KType.IntList, "numbers")
+        };
+
+        var data = new Array[]
+        {
+            new[] { "Alice".ToCharArray(), "Bob".ToCharArray() },
+            new[] { new[] { 1, 2 }, new[] { 3, 4 } }
+        };
+
+        var table = new KTable(columns, data);
+
+        // Act
+        var result = table.ToDataTable(options: DataTableConversionOptions.ForDisplayPurpose);
+
+        // Assert
+        Assert.Equal(typeof(string), result.Columns["name"].DataType); // char[] converted to string
+        Assert.Equal(typeof(string), result.Columns["numbers"].DataType); // int[] converted to string
+
+        Assert.Equal(2, result.Rows.Count);
+        Assert.Equal("Alice", result.Rows[0]["name"]);
+        Assert.Equal("[1,2]", result.Rows[0]["numbers"]);
+        Assert.Equal("Bob", result.Rows[1]["name"]);
+        Assert.Equal("[3,4]", result.Rows[1]["numbers"]);
+    }
+
+    [Fact]
+    public void ToDataTable_KKeyedTable_WithArrayColumns_ForDisplay_SerializesToJson()
+    {
+        // Arrange
+        var keyColumns = new[]
+        {
+            new KTable.Column(KType.CharList, "id")
+        };
+
+        var valueColumns = new[]
+        {
+            new KTable.Column(KType.IntList, "values")
+        };
+
+        var keyData = new Array[]
+        {
+            new[] { "A".ToCharArray(), "B".ToCharArray() }
+        };
+
+        var valueData = new Array[]
+        {
+            new[] { new[] { 10, 20 }, new[] { 30, 40 } }
+        };
+
+        var keys = new KTable(keyColumns, keyData);
+        var values = new KTable(valueColumns, valueData);
+        var keyedTable = new KKeyedTable(keys, values);
+
+        // Act
+        var result = keyedTable.ToDataTable(options: DataTableConversionOptions.ForDisplayPurpose);
+
+        // Assert
+        Assert.Equal(typeof(string), result.Columns["id"].DataType); // char[] converted to string
+        Assert.Equal(typeof(string), result.Columns["values"].DataType); // int[] converted to string
+
+        Assert.Equal(2, result.Rows.Count);
+        Assert.Equal("A", result.Rows[0]["id"]);
+        Assert.Equal("[10,20]", result.Rows[0]["values"]);
+        Assert.Equal("B", result.Rows[1]["id"]);
+        Assert.Equal("[30,40]", result.Rows[1]["values"]);
+    }
+
+    [Fact]
+    public void DataTableConversionOptions_ConvertForDisplay_HandlesArrays()
+    {
+        // Arrange
+        var options = DataTableConversionOptions.ForDisplayPurpose;
+        var intArray = new[] { 1, 2, 3 };
+        var stringArray = new[] { "a", "b", "c" };
+        var charArray = "hello".ToCharArray();
+
+        // Act
+        var intResult = options.ConvertForDisplay(intArray);
+        var stringResult = options.ConvertForDisplay(stringArray);
+        var charResult = options.ConvertForDisplay(charArray);
+
+        // Assert
+        Assert.Equal("[1,2,3]", intResult);
+        Assert.Equal("[\"a\",\"b\",\"c\"]", stringResult);
+        Assert.Equal("hello", charResult); // char[] gets special treatment
+    }
+
+    [Fact]
+    public void DataTableConversionOptions_GetDisplayType_HandlesArrays()
+    {
+        // Arrange
+        var options = DataTableConversionOptions.ForDisplayPurpose;
+
+        // Act & Assert
+        Assert.Equal(typeof(string), options.GetDisplayType(typeof(int[])));
+        Assert.Equal(typeof(string), options.GetDisplayType(typeof(string[])));
+        Assert.Equal(typeof(string), options.GetDisplayType(typeof(char[]))); // char[] also becomes string
+        Assert.Equal(typeof(int), options.GetDisplayType(typeof(int))); // non-array unchanged
+    }
+
+    [Fact]
+    public void DataTableConversionOptions_ConvertForDisplay_WithCustomJsonOptions()
+    {
+        // Arrange
+        var options = new DataTableConversionOptions
+        {
+            ForDisplay = true,
+            JsonOptions = new JsonSerializerOptions { WriteIndented = true }
+        };
+        var array = new[] { 1, 2, 3 };
+
+        // Act
+        var result = options.ConvertForDisplay(array);
+
+        // Assert
+        Assert.IsType<string>(result);
+        var jsonString = (string)result!;
+        Assert.Contains("\n", jsonString); // Should be indented (contains newlines)
+    }
+
+    [Fact]
+    public void DataTableConversionOptions_ConvertForDisplay_HandlesNullAndNonArrays()
+    {
+        // Arrange
+        var options = DataTableConversionOptions.ForDisplayPurpose;
+
+        // Act & Assert
+        Assert.Null(options.ConvertForDisplay(null));
+        Assert.Equal(42, options.ConvertForDisplay(42)); // Non-array unchanged
+        Assert.Equal("test", options.ConvertForDisplay("test")); // String unchanged
     }
 }

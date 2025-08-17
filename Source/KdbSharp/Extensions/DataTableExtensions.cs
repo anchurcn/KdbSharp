@@ -55,11 +55,8 @@ public static class DataTableExtensions
                 elementType = Nullable.GetUnderlyingType(elementType) ?? typeof(object);
             }
 
-            // For display purposes, convert char[] to string
-            if (options.ForDisplay && elementType == typeof(char[]))
-            {
-                elementType = typeof(string);
-            }
+            // For display purposes, get the display-friendly type
+            elementType = options.GetDisplayType(elementType);
 
             var dataColumn = new DataColumn(column.Name, elementType);
 
@@ -81,11 +78,8 @@ public static class DataTableExtensions
                 {
                     var value = table.Data[colIndex].GetValue(rowIndex);
 
-                    // Convert char[] to string for display purposes
-                    if (options.ForDisplay && value is char[] charArray)
-                    {
-                        value = new string(charArray);
-                    }
+                    // Convert value for display purposes
+                    value = options.ConvertForDisplay(value);
 
                     row[colIndex] = value ?? DBNull.Value;
                 }
@@ -140,11 +134,8 @@ public static class DataTableExtensions
                 elementType = Nullable.GetUnderlyingType(elementType) ?? typeof(object);
             }
 
-            // For display purposes, convert char[] to string
-            if (options.ForDisplay && elementType == typeof(char[]))
-            {
-                elementType = typeof(string);
-            }
+            // For display purposes, get the display-friendly type
+            elementType = options.GetDisplayType(elementType);
 
             var dataColumn = new DataColumn(resolvedColumnNames[columnIndex], elementType);
 
@@ -169,11 +160,8 @@ public static class DataTableExtensions
                 elementType = Nullable.GetUnderlyingType(elementType) ?? typeof(object);
             }
 
-            // For display purposes, convert char[] to string
-            if (options.ForDisplay && elementType == typeof(char[]))
-            {
-                elementType = typeof(string);
-            }
+            // For display purposes, get the display-friendly type
+            elementType = options.GetDisplayType(elementType);
 
             var dataColumn = new DataColumn(resolvedColumnNames[columnIndex], elementType);
 
@@ -199,11 +187,8 @@ public static class DataTableExtensions
                 {
                     var value = keyedTable.Keys.Data[keyColIndex].GetValue(rowIndex);
 
-                    // Convert char[] to string for display purposes
-                    if (options.ForDisplay && value is char[] keyCharArray)
-                    {
-                        value = new string(keyCharArray);
-                    }
+                    // Convert value for display purposes
+                    value = options.ConvertForDisplay(value);
 
                     row[dataColumnIndex] = value ?? DBNull.Value;
                     dataColumnIndex++;
@@ -214,11 +199,8 @@ public static class DataTableExtensions
                 {
                     var value = keyedTable.Values.Data[valueColIndex].GetValue(rowIndex);
 
-                    // Convert char[] to string for display purposes
-                    if (options.ForDisplay && value is char[] valueCharArray)
-                    {
-                        value = new string(valueCharArray);
-                    }
+                    // Convert value for display purposes
+                    value = options.ConvertForDisplay(value);
 
                     row[dataColumnIndex] = value ?? DBNull.Value;
                     dataColumnIndex++;
@@ -292,16 +274,9 @@ public static class DataTableExtensions
             valueElementType = Nullable.GetUnderlyingType(valueElementType) ?? typeof(object);
         }
 
-        // For display purposes, convert char[] to string
-        if (options.ForDisplay && keyElementType == typeof(char[]))
-        {
-            keyElementType = typeof(string);
-        }
-
-        if (options.ForDisplay && valueElementType == typeof(char[]))
-        {
-            valueElementType = typeof(string);
-        }
+        // For display purposes, get the display-friendly types
+        keyElementType = options.GetDisplayType(keyElementType);
+        valueElementType = options.GetDisplayType(valueElementType);
 
         // Create columns
         var keyColumn = new DataColumn("Key", keyElementType);
@@ -325,16 +300,9 @@ public static class DataTableExtensions
                 var keyValue = dictionary.Keys.GetValue(i);
                 var valueValue = dictionary.Values.GetValue(i);
 
-                // Convert char[] to string for display purposes
-                if (options.ForDisplay && keyValue is char[] keyCharArray)
-                {
-                    keyValue = new string(keyCharArray);
-                }
-
-                if (options.ForDisplay && valueValue is char[] valueCharArray)
-                {
-                    valueValue = new string(valueCharArray);
-                }
+                // Convert values for display purposes
+                keyValue = options.ConvertForDisplay(keyValue);
+                valueValue = options.ConvertForDisplay(valueValue);
 
                 row["Key"] = keyValue ?? DBNull.Value;
                 row["Value"] = valueValue ?? DBNull.Value;
