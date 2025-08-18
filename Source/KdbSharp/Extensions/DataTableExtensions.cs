@@ -21,7 +21,7 @@ using KdbSharp.Types;
 namespace KdbSharp.Extensions;
 
 /// <summary>
-/// Extension methods for converting KTable and KKeyedTable to DataTable.
+/// Extension methods for converting KTable, KKeyedTable, and KSimpleDictionary to DataTable.
 /// </summary>
 public static class DataTableExtensions
 {
@@ -30,12 +30,14 @@ public static class DataTableExtensions
     /// </summary>
     /// <param name="table">The KTable to convert.</param>
     /// <param name="tableName">The name for the DataTable. If null, defaults to "KTable".</param>
+    /// <param name="options">Options for configuring the conversion behavior.</param>
     /// <returns>A DataTable containing the data from the KTable.</returns>
-    public static DataTable ToDataTable(this KTable table, string? tableName = null)
+    public static DataTable ToDataTable(this KTable table, string? tableName = null, DataTableConversionOptions? options = null)
     {
         if (table == null)
             throw new ArgumentNullException(nameof(table));
 
+        options ??= DataTableConversionOptions.Default;
         var dataTable = new DataTable(tableName ?? "KTable");
         
         // Create columns
@@ -52,6 +54,9 @@ public static class DataTableExtensions
             {
                 elementType = Nullable.GetUnderlyingType(elementType) ?? typeof(object);
             }
+
+            // For display purposes, get the display-friendly type
+            elementType = options.GetDisplayType(elementType);
 
             var dataColumn = new DataColumn(column.Name, elementType);
 
@@ -72,6 +77,10 @@ public static class DataTableExtensions
                 for (int colIndex = 0; colIndex < table.ColumnCount; colIndex++)
                 {
                     var value = table.Data[colIndex].GetValue(rowIndex);
+
+                    // Convert value for display purposes
+                    value = options.ConvertForDisplay(value);
+
                     row[colIndex] = value ?? DBNull.Value;
                 }
                 dataTable.Rows.Add(row);
@@ -90,12 +99,14 @@ public static class DataTableExtensions
     /// </summary>
     /// <param name="keyedTable">The KKeyedTable to convert.</param>
     /// <param name="tableName">The name for the DataTable. If null, defaults to "KKeyedTable".</param>
+    /// <param name="options">Options for configuring the conversion behavior.</param>
     /// <returns>A DataTable containing the data from the KKeyedTable.</returns>
-    public static DataTable ToDataTable(this KKeyedTable keyedTable, string? tableName = null)
+    public static DataTable ToDataTable(this KKeyedTable keyedTable, string? tableName = null, DataTableConversionOptions? options = null)
     {
         if (keyedTable == null)
             throw new ArgumentNullException(nameof(keyedTable));
 
+        options ??= DataTableConversionOptions.Default;
         var dataTable = new DataTable(tableName ?? "KKeyedTable");
         
         // Collect all column names to handle duplicates
@@ -123,6 +134,9 @@ public static class DataTableExtensions
                 elementType = Nullable.GetUnderlyingType(elementType) ?? typeof(object);
             }
 
+            // For display purposes, get the display-friendly type
+            elementType = options.GetDisplayType(elementType);
+
             var dataColumn = new DataColumn(resolvedColumnNames[columnIndex], elementType);
 
             dataColumn.ExtendedProperties["KType"] = column.Type;
@@ -145,6 +159,9 @@ public static class DataTableExtensions
             {
                 elementType = Nullable.GetUnderlyingType(elementType) ?? typeof(object);
             }
+
+            // For display purposes, get the display-friendly type
+            elementType = options.GetDisplayType(elementType);
 
             var dataColumn = new DataColumn(resolvedColumnNames[columnIndex], elementType);
 
@@ -169,14 +186,22 @@ public static class DataTableExtensions
                 for (int keyColIndex = 0; keyColIndex < keyedTable.Keys.ColumnCount; keyColIndex++)
                 {
                     var value = keyedTable.Keys.Data[keyColIndex].GetValue(rowIndex);
+
+                    // Convert value for display purposes
+                    value = options.ConvertForDisplay(value);
+
                     row[dataColumnIndex] = value ?? DBNull.Value;
                     dataColumnIndex++;
                 }
-                
+
                 // Add value column values
                 for (int valueColIndex = 0; valueColIndex < keyedTable.Values.ColumnCount; valueColIndex++)
                 {
                     var value = keyedTable.Values.Data[valueColIndex].GetValue(rowIndex);
+
+                    // Convert value for display purposes
+                    value = options.ConvertForDisplay(value);
+
                     row[dataColumnIndex] = value ?? DBNull.Value;
                     dataColumnIndex++;
                 }
@@ -217,5 +242,79 @@ public static class DataTableExtensions
         }
         
         return resolved;
+    }
+
+    /// <summary>
+    /// Converts a KSimpleDictionary to a DataTable.
+    /// </summary>
+    /// <param name="dictionary">The KSimpleDictionary to convert.</param>
+    /// <param name="tableName">The name for the DataTable. If null, defaults to "KSimpleDictionary".</param>
+    /// <param name="options">Options for configuring the conversion behavior.</param>
+    /// <returns>A DataTable containing the key-value pairs from the KSimpleDictionary.</returns>
+    public static DataTable ToDataTable(this KSimpleDictionary dictionary, string? tableName = null, DataTableConversionOptions? options = null)
+    {
+        if (dictionary == null)
+            throw new ArgumentNullException(nameof(dictionary));
+
+        options ??= DataTableConversionOptions.Default;
+        var dataTable = new DataTable(tableName ?? "KSimpleDictionary");
+
+        // Determine the types for keys and values
+        var keyElementType = dictionary.Keys.GetType().GetElementType() ?? typeof(object);
+        var valueElementType = dictionary.Values.GetType().GetElementType() ?? typeof(object);
+
+        // Handle nullable types - DataTable doesn't support nullable types directly
+        if (keyElementType.IsGenericType && keyElementType.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            keyElementType = Nullable.GetUnderlyingType(keyElementType) ?? typeof(object);
+        }
+
+        if (valueElementType.IsGenericType && valueElementType.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            valueElementType = Nullable.GetUnderlyingType(valueElementType) ?? typeof(object);
+        }
+
+        // For display purposes, get the display-friendly types
+        keyElementType = options.GetDisplayType(keyElementType);
+        valueElementType = options.GetDisplayType(valueElementType);
+
+        // Create columns
+        var keyColumn = new DataColumn("Key", keyElementType);
+        var valueColumn = new DataColumn("Value", valueElementType);
+
+        // Add metadata about the original array types
+        keyColumn.ExtendedProperties["OriginalType"] = dictionary.Keys.GetType();
+        valueColumn.ExtendedProperties["OriginalType"] = dictionary.Values.GetType();
+
+        dataTable.Columns.Add(keyColumn);
+        dataTable.Columns.Add(valueColumn);
+
+        // Add rows
+        dataTable.BeginLoadData();
+        try
+        {
+            for (int i = 0; i < dictionary.Keys.Length; i++)
+            {
+                var row = dataTable.NewRow();
+
+                var keyValue = dictionary.Keys.GetValue(i);
+                var valueValue = dictionary.Values.GetValue(i);
+
+                // Convert values for display purposes
+                keyValue = options.ConvertForDisplay(keyValue);
+                valueValue = options.ConvertForDisplay(valueValue);
+
+                row["Key"] = keyValue ?? DBNull.Value;
+                row["Value"] = valueValue ?? DBNull.Value;
+
+                dataTable.Rows.Add(row);
+            }
+        }
+        finally
+        {
+            dataTable.EndLoadData();
+        }
+
+        return dataTable;
     }
 }

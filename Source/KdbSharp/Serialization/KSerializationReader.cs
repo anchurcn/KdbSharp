@@ -537,6 +537,152 @@ public ref struct KSerializationReader
         EndReadList();
         return result;
     }
+
+    /// <summary>
+    /// Reads a lambda function from the buffer.
+    /// </summary>
+    /// <returns>The lambda function read from the buffer.</returns>
+    public KLambda ReadLambda()
+    {
+        BeginReadType();
+
+        // Read context (symbol)
+        var contextStr = ReadNullTerminatedString(TextEncoding);
+        contextStr = string.IsNullOrEmpty(contextStr) ? null : contextStr;
+
+        // Read expression as character array
+        var expressionChars = ReadCharArray();
+        var expression = new string(expressionChars);
+
+        EndReadType();
+        return new KLambda(expression, contextStr);
+    }
+
+    /// <summary>
+    /// Reads a projection function from the buffer.
+    /// </summary>
+    /// <returns>The projection function read from the buffer.</returns>
+    public KProjection ReadProjection()
+    {
+        BeginReadType();
+
+        // Read the number of parameters
+        var paramCount = Read<int>();
+        var parameters = new object?[paramCount];
+
+        // Read each parameter
+        for (int i = 0; i < paramCount; i++)
+        {
+            parameters[i] = ReadObject();
+        }
+
+        EndReadType();
+        return new KProjection(parameters);
+    }
+
+    /// <summary>
+    /// Reads a composition function from the buffer.
+    /// </summary>
+    /// <returns>The composition function read from the buffer.</returns>
+    public KComposition ReadComposition()
+    {
+        BeginReadType();
+
+        // Read the number of functions
+        var funcCount = Read<int>();
+        var functions = new object?[funcCount];
+
+        // Read each function
+        for (int i = 0; i < funcCount; i++)
+        {
+            functions[i] = ReadObject();
+        }
+
+        EndReadType();
+        return new KComposition(functions);
+    }
+
+    /// <summary>
+    /// Reads a function based on the specified type.
+    /// </summary>
+    /// <param name="functionType">The type of function to read.</param>
+    /// <returns>The function read from the buffer.</returns>
+    public KFunction ReadFunction(KType functionType)
+    {
+        return functionType switch
+        {
+            KType.Lambda => ReadLambda(),
+            KType.Projection => ReadProjection(),
+            KType.Composition => ReadComposition(),
+            KType.UnaryPrimitive => ReadGenericFunction(functionType),
+            KType.Operator => ReadGenericFunction(functionType),
+            KType.Iterator => ReadGenericFunction(functionType),
+            KType.EachModified => ReadGenericFunction(functionType),
+            KType.OverModified => ReadGenericFunction(functionType),
+            KType.ScanModified => ReadGenericFunction(functionType),
+            KType.PriorModified => ReadGenericFunction(functionType),
+            KType.EachRightModified => ReadGenericFunction(functionType),
+            KType.EachLeftModified => ReadGenericFunction(functionType),
+            KType.DynamicLoad => ReadGenericFunction(functionType),
+            _ => throw new NotSupportedException($"Function type {functionType} is not supported.")
+        };
+    }
+
+    /// <summary>
+    /// Reads a generic function (primitive functions without specific structure).
+    /// </summary>
+    /// <param name="functionType">The type of function to read.</param>
+    /// <returns>The generic function read from the buffer.</returns>
+    private KFunction ReadGenericFunction(KType functionType)
+    {
+        BeginReadType();
+
+        // Read placeholder byte for primitive functions
+        var code = Read<byte>();
+
+        EndReadType();
+
+        // For unary primitive, check if code is 0 (null function)
+        if (functionType == KType.UnaryPrimitive && code == 0)
+        {
+            return null!; // Following qSharp pattern for null functions
+        }
+
+        return KFunction.Create(functionType);
+    }
+
+    /// <summary>
+    /// Reads a character array from the buffer.
+    /// </summary>
+    /// <returns>The character array read from the buffer.</returns>
+    private char[] ReadCharArray()
+    {
+        StartReadList();
+        var length = ListLength ?? throw new InvalidOperationException("List length not available");
+        var chars = new char[length];
+
+        for (int i = 0; i < length; i++)
+        {
+            chars[i] = (char)Read<byte>();
+        }
+
+        EndReadList();
+        return chars;
+    }
+
+    /// <summary>
+    /// Reads an object from the buffer. This is a placeholder that should be implemented
+    /// by the higher-level serialization system.
+    /// </summary>
+    /// <returns>The object read from the buffer.</returns>
+    /// <exception cref="NotImplementedException">This method needs to be implemented by the serialization system.</exception>
+    private object? ReadObject()
+    {
+        // This should be implemented by the KSerializer or similar high-level component
+        // For now, we'll throw to indicate this needs to be wired up properly
+        throw new NotImplementedException("ReadObject should be implemented by the serialization system");
+    }
+
     #endregion
 
     #region Read helper

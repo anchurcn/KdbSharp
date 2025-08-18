@@ -492,5 +492,99 @@ public struct KSerializationWriter
         WriteUnaryPrimitive(UnaryPrimitive.Unit);
     }
 
+    /// <summary>
+    /// Writes a lambda function.
+    /// </summary>
+    /// <param name="lambda">The lambda function to write.</param>
+    public void WriteLambda(KLambda lambda)
+    {
+        var needPop = BeginWriteType(KType.Lambda);
+
+        // Write context (empty symbol for now, following qSharp pattern)
+        _writer.WriteNullTerminatedString(lambda.Context ?? "", TextEncoding);
+
+        // Write expression as character array
+        var expressionChars = lambda.Expression.ToCharArray();
+        StartWriteList(KType.CharList, expressionChars.Length);
+        foreach (var ch in expressionChars)
+        {
+            _writer.WriteByte((byte)ch);
+        }
+
+        if (needPop)
+            EndWriteType();
+    }
+
+    /// <summary>
+    /// Writes a projection function.
+    /// </summary>
+    /// <param name="projection">The projection function to write.</param>
+    public void WriteProjection(KProjection projection)
+    {
+        var needPop = BeginWriteType(KType.Projection);
+
+        // Write the number of parameters
+        _writer.WriteInt32(projection.Count);
+
+        // Write each parameter as an object
+        foreach (var parameter in projection)
+        {
+            // TODO: This should be implemented by the higher-level serialization system
+            throw new NotImplementedException("WriteObject should be implemented by the serialization system");
+        }
+
+        if (needPop)
+            EndWriteType();
+    }
+
+    /// <summary>
+    /// Writes a composition function.
+    /// </summary>
+    /// <param name="composition">The composition function to write.</param>
+    public void WriteComposition(KComposition composition)
+    {
+        var needPop = BeginWriteType(KType.Composition);
+
+        // Write the number of functions
+        _writer.WriteInt32(composition.Count);
+
+        // Write each function as an object
+        foreach (var function in composition)
+        {
+            // TODO: This should be implemented by the higher-level serialization system
+            throw new NotImplementedException("WriteObject should be implemented by the serialization system");
+        }
+
+        if (needPop)
+            EndWriteType();
+    }
+
+    /// <summary>
+    /// Writes a generic function.
+    /// </summary>
+    /// <param name="function">The function to write.</param>
+    public void WriteFunction(KFunction function)
+    {
+        switch (function)
+        {
+            case KLambda lambda:
+                WriteLambda(lambda);
+                break;
+            case KProjection projection:
+                WriteProjection(projection);
+                break;
+            case KComposition composition:
+                WriteComposition(composition);
+                break;
+            default:
+                // Generic function - just write the type code and a placeholder byte
+                var needPop = BeginWriteType(function.FunctionType);
+                _writer.WriteByte(0); // Placeholder byte for primitive functions
+                if (needPop)
+                    EndWriteType();
+                break;
+        }
+    }
+
     #endregion
 }
