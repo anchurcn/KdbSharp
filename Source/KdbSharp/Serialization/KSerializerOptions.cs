@@ -294,4 +294,34 @@ public partial class KSerializerOptions
     // 如果是 实体类，则是生成一个 该类型的 ObjectConverter，由 RegisterDefaultConverterFor 返回，不用预先注册。
     // 更新：应该实现个拓展性更强的注册默认 Converter 的方法，以支持 Dictionary<,> 实体类的序列化，不可能为每个这种开放的类型都注册一个 Converter
     // 考虑 Factory 模式，根据类型生成 Converter
+
+    #region Model Builder Integration
+
+    private KSerializationModelBuilder? _builder;
+
+    /// <summary>
+    /// Gets the model builder for configuring entity serialization.
+    /// </summary>
+    public KSerializationModelBuilder Builder
+    {
+        get
+        {
+            if (_builder == null)
+            {
+                _builder = new KSerializationModelBuilder(this);
+            }
+            return _builder;
+        }
+    }
+
+    /// <summary>
+    /// Applies all model configurations that have been set up through the Builder.
+    /// This should be called after all entity configurations are complete.
+    /// </summary>
+    public void ApplyModelConfiguration()
+    {
+        _builder?.ApplyConfigurations();
+    }
+
+    #endregion
 }
