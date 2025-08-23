@@ -128,6 +128,7 @@ public partial class KSerializerOptions
         RegisterConverter(new KDictionaryConverter<KSimpleDictionary>());
         RegisterConverter(new KDictionaryConverter<KKeyedTable>());
         RegisterConverter(new KDictionaryConverter<object>());
+        RegisterConverter(new KGenericDictionaryConverterFactory()); // Support for Dictionary<TKey, TValue>
         RegisterConverter(new KTableConverter());
         RegisterConverter(new KUnitConverter());
         RegisterConverter(new KdbExceptionConverter());
