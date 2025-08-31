@@ -53,11 +53,11 @@ public class KDictionaryConverter<T> : KTypeConverter<T> // where T: KSimpleDict
             writer.StartWriteDictionary();
 
             // Determine the KType for keys and values based on the actual array types
-            var keysKType = GetKTypeForArray(simpleDict.Keys);
-            var valuesKType = GetKTypeForArray(simpleDict.Values);
+            var keysKType = GetKTypeForArray(simpleDict.Keys, options);
+            var valuesKType = GetKTypeForArray(simpleDict.Values, options);
 
-            KSerializer.Serialize(ref writer, simpleDict.Keys, keysKType, options);
-            KSerializer.Serialize(ref writer, simpleDict.Values, valuesKType, options);
+            KSerializer.Serialize(ref writer, simpleDict.Keys, simpleDict.Keys.GetType(), keysKType, options);
+            KSerializer.Serialize(ref writer, simpleDict.Values, simpleDict.Values.GetType(), valuesKType, options);
             writer.EndWriteDictionary();
         }
         else if (value is KKeyedTable keyedTable)
@@ -75,28 +75,14 @@ public class KDictionaryConverter<T> : KTypeConverter<T> // where T: KSimpleDict
         }
     }
 
-    private static KType GetKTypeForArray(Array array)
+    private static KType GetKTypeForArray(Array array, KSerializerOptions options)
     {
         var elementType = array.GetType().GetElementType()!;
-
-        // Map CLR types to KDB array types
-        // For basic CLR arrays, we use GeneralList to let the serializer handle the conversion
-        return elementType switch
-        {
-            Type t when t == typeof(bool) => KType.BooleanList,
-            Type t when t == typeof(byte) => KType.ByteList,
-            Type t when t == typeof(short) => KType.ShortList,
-            Type t when t == typeof(int) => KType.IntList,
-            Type t when t == typeof(long) => KType.LongList,
-            Type t when t == typeof(float) => KType.RealList,
-            Type t when t == typeof(double) => KType.FloatList,
-            Type t when t == typeof(char) => KType.CharList,
-            Type t when t == typeof(string) => KType.SymbolList, // Use SymbolList for string arrays
-            Type t when t == typeof(DateTime) => KType.DateTimeList,
-            Type t when t == typeof(TimeSpan) => KType.TimeSpanList,
-            Type t when t == typeof(Guid) => KType.GuidList,
-            _ => KType.GeneralList // Fallback to general list for complex types
-        };
+        // TODO: Get default converter for element type
+        // and converter.TypeToWriteTo is the target atom type.
+        // TODO: cache
+        var converter = options.GetConverter(elementType) ?? throw new InvalidOperationException();
+        return converter.TypeToWriteTo?.Neg() ?? throw new InvalidOperationException();
     }
 }
 

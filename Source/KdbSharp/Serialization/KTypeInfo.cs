@@ -120,10 +120,10 @@ public abstract class KTypeInfo
     /// <returns>True if converter was found and is of the correct type.</returns>
     public bool TryGetConverter<T>(KType t, [NotNullWhen(true)] out KTypeConverter<T>? converter)
     {
-        if (TryGetConverter(t, out var c))
+        if (TryGetConverter(t, out var c) && c is KTypeConverter<T> typedConverter)
         {
-            converter = (KTypeConverter<T>)c;
-            return converter is not null;
+            converter = typedConverter;
+            return true;
         }
         else
         {
